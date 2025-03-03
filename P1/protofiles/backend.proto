@@ -1,0 +1,23 @@
+syntax = "proto3";
+
+package backend;
+
+option go_package = "protofiles/backend";
+
+// The computational service that performs a simple arithmetic task.
+service ComputationalService {
+  // Performs a compute operation.
+  rpc ComputeTask(ComputeTaskRequest) returns (ComputeTaskResponse);
+}
+
+// Request message with two operands and an operation.
+message ComputeTaskRequest {
+  int32 a = 1;
+  int32 b = 2;
+  string operation = 3; // e.g. "add", "multiply"
+}
+
+// Response message containing the result.
+message ComputeTaskResponse {
+  int32 result = 1;
+}

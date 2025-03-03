@@ -1,0 +1,53 @@
+syntax = "proto3";
+
+package lb;
+
+option go_package = "protofiles/lb";
+
+// Enumeration for load balancing policies.
+enum BalancingPolicy {
+  PICK_FIRST = 0;
+  ROUND_ROBIN = 1;
+  LEAST_LOAD = 2;
+}
+
+// Request from client asking for a backend server.
+message GetBestServerRequest {
+  BalancingPolicy policy = 1;
+}
+
+// Response containing the selected backend server address.
+message GetBestServerResponse {
+  string server_address = 1;
+}
+
+// Request from a backend server to register itself.
+message RegisterBackendRequest {
+  string server_address = 1;
+}
+
+// Response for the backend registration.
+message RegisterBackendResponse {
+  bool success = 1;
+}
+
+// Request from a backend server to report its current load.
+message ReportLoadRequest {
+  string server_address = 1;
+  int32 load = 2;
+}
+
+// Response for the load reporting.
+message ReportLoadResponse {
+  bool success = 1;
+}
+
+// Service definition for the Load Balancer.
+service LoadBalancer {
+  // For clients to query the best server.
+  rpc GetBestServer(GetBestServerRequest) returns (GetBestServerResponse);
+  // For backend servers to register.
+  rpc RegisterBackend(RegisterBackendRequest) returns (RegisterBackendResponse);
+  // For backend servers to report load.
+  rpc ReportLoad(ReportLoadRequest) returns (ReportLoadResponse);
+}
