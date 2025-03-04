@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package mapreduce;
+
+option go_package = "./";
+
+// Enum to differentiate between map and reduce tasks.
+enum TaskType {
+    MAP = 0;
+    REDUCE = 1;
+}
+
+message TaskRequest {
+    int32 task_id = 1;              // Identifier for the task (map or reduce).
+    TaskType task_type = 2;         // MAP or REDUCE.
+    string input_file = 3;          // For map tasks.
+    repeated string intermediate_files = 4; // For reduce tasks: list of intermediate file names.
+    int32 n_reducer = 5;            // For map tasks: number of reducers (to partition the output).
+    string job_type = 6;            // "wordcount" or "invertedindex".
+    int32 reduce_task_id = 7;       // For reduce tasks: reducer id.
+}
+
+message TaskResponse {
+    bool success = 1;
+    string message = 2;
+}
+
+service Worker {
+    rpc ExecuteTask(TaskRequest) returns (TaskResponse);
+}
