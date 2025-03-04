@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: backend.proto
 
-package protofiles
+package backend
 
 import (
 	context "context"

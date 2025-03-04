@@ -4,7 +4,7 @@
 // - protoc             v3.12.4
 // source: loadbalancer.proto
 
-package protofiles
+package lb
 
 import (
 	context "context"

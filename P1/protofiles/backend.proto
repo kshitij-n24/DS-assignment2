@@ -2,7 +2,8 @@ syntax = "proto3";
 
 package backend;
 
-option go_package = "github.com/kshitij-n24/DS-assignment2/P1/protofiles";
+// option go_package = "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend;backend";
+option go_package = "./backend";
 
 // The computational service that performs a simple arithmetic task.
 service ComputationalService {
