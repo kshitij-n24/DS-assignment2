@@ -9,8 +9,8 @@ import (
 	"net"
 	"time"
 
-	pb "protofiles/backend"
-	lbpb "protofiles/lb"
+	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
+	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
 
 	"google.golang.org/grpc"
 )

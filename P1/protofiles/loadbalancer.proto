@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package lb;
 
-option go_package = "protofiles/lb";
+option go_package = "github.com/kshitij-n24/DS-assignment2/P1/protofiles";
 
 // Enumeration for load balancing policies.
 enum BalancingPolicy {
