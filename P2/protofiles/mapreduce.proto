@@ -25,6 +25,14 @@ message TaskResponse {
     string message = 2;
 }
 
+message ShutdownRequest {}
+
+message ShutdownResponse {
+    bool success = 1;
+    string message = 2;
+}
+
 service Worker {
     rpc ExecuteTask(TaskRequest) returns (TaskResponse);
+    rpc Shutdown(ShutdownRequest) returns (ShutdownResponse);
 }

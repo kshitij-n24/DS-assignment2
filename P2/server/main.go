@@ -5,7 +5,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -17,8 +16,7 @@ import (
 func main() {
 	// Define CLI flags.
 	jobType := flag.String("job", "wordcount", "Job type: wordcount or invertedindex")
-	// For simplicity, we assume one map task per input file.
-	nReducer := flag.Int("nreducer", 2, "Number of reducer tasks")
+	nReducer := flag.Int("nreducer", 1, "Number of reducer tasks (set to 1 for aggregated word count output)")
 	workersFlag := flag.String("workers", "", "Comma-separated list of worker addresses (e.g., localhost:5001,localhost:5002)")
 	flag.Parse()
 
@@ -37,7 +35,7 @@ func main() {
 	var wg sync.WaitGroup
 	mapTaskCount := len(inputFiles)
 
-	// Assign a map task for each input file. (Round-robin assignment.)
+	// Assign a map task for each input file (round-robin assignment).
 	for i, inputFile := range inputFiles {
 		wg.Add(1)
 		workerAddr := workerAddrs[i%len(workerAddrs)]
@@ -49,8 +47,7 @@ func main() {
 	wg.Wait()
 	log.Printf("All map tasks completed.")
 
-	// Now assign reduce tasks.
-	// Each reduce task collects the intermediate files from all map tasks.
+	// Assign reduce tasks: each reduce task collects intermediate files from all map tasks.
 	for r := 0; r < *nReducer; r++ {
 		wg.Add(1)
 		var intermediateFiles []string
@@ -65,6 +62,11 @@ func main() {
 	}
 	wg.Wait()
 	log.Printf("All reduce tasks completed. Job done.")
+
+	// Shutdown all workers.
+	for _, workerAddr := range workerAddrs {
+		shutdownWorker(workerAddr)
+	}
 }
 
 // assignMapTask calls the ExecuteTask RPC on a worker for a map task.
@@ -83,7 +85,7 @@ func assignMapTask(taskID int, inputFile string, nReducer int, jobType string, w
 		NReducer:  int32(nReducer),
 		JobType:   jobType,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := client.ExecuteTask(ctx, req)
 	if err != nil {
@@ -109,7 +111,7 @@ func assignReduceTask(reducerID int, intermediateFiles []string, jobType string,
 		JobType:           jobType,
 		ReduceTaskId:      int32(reducerID),
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := client.ExecuteTask(ctx, req)
 	if err != nil {
@@ -117,4 +119,24 @@ func assignReduceTask(reducerID int, intermediateFiles []string, jobType string,
 		return
 	}
 	log.Printf("Reduce task %d response from worker %s: %s", reducerID, workerAddr, resp.Message)
+}
+
+// shutdownWorker sends the Shutdown RPC to a worker.
+func shutdownWorker(workerAddr string) {
+	conn, err := grpc.Dial(workerAddr, grpc.WithInsecure())
+	if err != nil {
+		log.Printf("failed to connect to worker %s for shutdown: %v", workerAddr, err)
+		return
+	}
+	defer conn.Close()
+	client := pb.NewWorkerClient(conn)
+	req := &pb.ShutdownRequest{}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resp, err := client.Shutdown(ctx, req)
+	if err != nil {
+		log.Printf("failed to shutdown worker %s: %v", workerAddr, err)
+		return
+	}
+	log.Printf("Shutdown response from worker %s: %s", workerAddr, resp.Message)
 }
