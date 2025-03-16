@@ -10,7 +10,6 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
-	"time"
 
 	"google.golang.org/grpc"
 	pb "github.com/kshitij-n24/DS-assignment2/P2/protofiles"
@@ -21,7 +20,7 @@ type server struct {
 	pb.UnimplementedWorkerServer
 }
 
-// ihash partitions keys across reducers.
+// A simple hash function to partition keys across reducers.
 func ihash(key string, n int) int {
 	hash := 0
 	for _, ch := range key {
@@ -30,7 +29,7 @@ func ihash(key string, n int) int {
 	return hash % n
 }
 
-// ExecuteTask processes either a map or reduce task.
+// ExecuteTask processes the assigned map or reduce task.
 func (s *server) ExecuteTask(ctx context.Context, req *pb.TaskRequest) (*pb.TaskResponse, error) {
 	switch req.TaskType {
 	case pb.TaskType_MAP:
@@ -50,16 +49,6 @@ func (s *server) ExecuteTask(ctx context.Context, req *pb.TaskRequest) (*pb.Task
 	default:
 		return &pb.TaskResponse{Success: false, Message: "Unknown task type"}, nil
 	}
-}
-
-// Shutdown handles the RPC call to shut down the worker.
-func (s *server) Shutdown(ctx context.Context, req *pb.ShutdownRequest) (*pb.ShutdownResponse, error) {
-	log.Printf("Shutdown requested. Exiting.")
-	go func() {
-		time.Sleep(100 * time.Millisecond)
-		os.Exit(0)
-	}()
-	return &pb.ShutdownResponse{Success: true, Message: "Worker shutting down"}, nil
 }
 
 // handleMapTask reads the input file, tokenizes it, and writes intermediate files.
@@ -87,7 +76,7 @@ func handleMapTask(taskID int32, inputFile string, nReducer int, jobType string)
 		line := scanner.Text()
 		words := strings.Fields(line)
 		for _, word := range words {
-			// Clean the word (remove punctuation, convert to lowercase).
+			// Clean the word (e.g., remove punctuation, convert to lowercase).
 			cleaned := strings.ToLower(strings.Trim(word, ".,!?:;\"'()"))
 			if cleaned == "" {
 				continue
@@ -119,12 +108,12 @@ func handleMapTask(taskID int32, inputFile string, nReducer int, jobType string)
 	return nil
 }
 
-// handleReduceTask aggregates intermediate files and writes the final output.
+// handleReduceTask reads the intermediate files, aggregates the results, and writes final output.
 func handleReduceTask(reduceTaskID int, intermediateFiles []string, jobType string) error {
 	switch jobType {
 	case "wordcount":
-		// Aggregate total word count.
-		totalCount := 0
+		// Aggregate word counts.
+		wc := make(map[string]int)
 		for _, filename := range intermediateFiles {
 			file, err := os.Open(filename)
 			if err != nil {
@@ -138,25 +127,28 @@ func handleReduceTask(reduceTaskID int, intermediateFiles []string, jobType stri
 				if len(parts) != 2 {
 					continue
 				}
+				word := parts[0]
 				count, err := strconv.Atoi(parts[1])
 				if err != nil {
 					continue
 				}
-				totalCount += count
+				wc[word] += count
 			}
 			file.Close()
 		}
-		// Write the aggregated total to out.txt.
-		outFileName := "out.txt"
+		// Write the aggregated counts to the final output file.
+		outFileName := fmt.Sprintf("mr-out-%d", reduceTaskID)
 		outFile, err := os.Create(outFileName)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %v", err)
 		}
 		defer outFile.Close()
 		writer := bufio.NewWriter(outFile)
-		_, err = writer.WriteString(fmt.Sprintf("%d\n", totalCount))
-		if err != nil {
-			return err
+		for word, count := range wc {
+			_, err := writer.WriteString(fmt.Sprintf("%s %d\n", word, count))
+			if err != nil {
+				return err
+			}
 		}
 		writer.Flush()
 	case "invertedindex":
