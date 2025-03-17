@@ -3,7 +3,7 @@ syntax = "proto3";
 package byzantine;
 
 // Option to set the Go package name (adjust the import path as needed)
-option go_package = "github.com/yourname/yourrepo/protofiles/byzantinepb";
+option go_package = "./";
 
 service ByzantineService {
   // PropagateOrder is called to send an order (or report) for a given round.
