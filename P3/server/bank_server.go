@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -16,7 +17,6 @@ import (
 	pb "github.com/kshitij-n24/DS-assignment2/P3/protofiles"
 )
 
-// BankServer implements the BankService.
 type BankServer struct {
 	pb.UnimplementedBankServiceServer
 
@@ -25,7 +25,6 @@ type BankServer struct {
 	mu                   sync.Mutex
 }
 
-// NewBankServer creates a new bank server instance.
 func NewBankServer(name string) *BankServer {
 	return &BankServer{
 		name:                 name,
@@ -33,11 +32,13 @@ func NewBankServer(name string) *BankServer {
 	}
 }
 
-// PrepareTransaction simulates the prepare phase.
 func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	// Simulate preparation. In production, you might check account limits, etc.
+	// If duplicate prepare is received, log and continue.
+	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
+		log.Printf("[%s] Duplicate prepare for transaction %s", bs.name, req.TransactionId)
+	}
 	bs.preparedTransactions[req.TransactionId] = req.Amount
 	log.Printf("[%s] Prepared transaction %s for amount %.2f", bs.name, req.TransactionId, req.Amount)
 	return &pb.BankTransactionResponse{
@@ -46,7 +47,6 @@ func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransa
 	}, nil
 }
 
-// CommitTransaction commits a prepared transaction.
 func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
@@ -66,7 +66,6 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 	}, nil
 }
 
-// AbortTransaction aborts a prepared transaction.
 func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
@@ -83,7 +82,21 @@ func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransact
 }
 
 func main() {
-	// Updated certificate directory is "certificates".
+	bankName := flag.String("name", "BankA", "Name of the bank")
+	port := flag.String("port", "50051", "Port for the bank server to listen on")
+	flag.Parse()
+
+	// Set up file logging.
+	logDir := "../logs"
+	os.MkdirAll(logDir, 0755)
+	logFilePath := fmt.Sprintf("%s/%s_server.log", logDir, *bankName)
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	if err != nil {
+		log.Fatalf("Failed to open log file: %v", err)
+	}
+	defer logFile.Close()
+	log.SetOutput(logFile)
+
 	certFile := "../certificates/server.crt"
 	keyFile := "../certificates/server.key"
 	creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
@@ -94,23 +107,21 @@ func main() {
 	opts := []grpc.ServerOption{grpc.Creds(creds)}
 	grpcServer := grpc.NewServer(opts...)
 
-	// Initialize the bank server.
-	bankName := "BankA"
-	bankServer := NewBankServer(bankName)
+	bankServer := NewBankServer(*bankName)
 	pb.RegisterBankServiceServer(grpcServer, bankServer)
 
-	listener, err := net.Listen("tcp", ":50051")
+	addr := ":" + *port
+	listener, err := net.Listen("tcp", addr)
 	if err != nil {
-		log.Fatalf("[STARTUP] Failed to listen on :50051: %v", err)
+		log.Fatalf("[STARTUP] Failed to listen on %s: %v", addr, err)
 	}
-	log.Printf("[STARTUP] %s Bank server is listening on :50051", bankName)
+	log.Printf("[STARTUP] %s Bank server is listening on %s", *bankName, addr)
 
-	// Handle graceful shutdown.
 	go func() {
 		ch := make(chan os.Signal, 1)
 		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
 		<-ch
-		log.Printf("[SHUTDOWN] Shutting down %s Bank server...", bankName)
+		log.Printf("[SHUTDOWN] Shutting down %s Bank server...", *bankName)
 		grpcServer.GracefulStop()
 		os.Exit(0)
 	}()
