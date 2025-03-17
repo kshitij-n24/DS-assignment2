@@ -6,6 +6,7 @@ import (
   "crypto/x509"
   "encoding/json"
   "fmt"
+  "io"
   "io/ioutil"
   "log"
   "net"
@@ -24,7 +25,7 @@ import (
 
 // PGData represents the persistent data for the Payment Gateway.
 type PGData struct {
-  UserBalances         map[string]float64             `json:"user_balances"`
+  UserBalances          map[string]float64            `json:"user_balances"`
   ProcessedTransactions map[string]*pb.PaymentResponse `json:"processed_transactions"`
 }
 
@@ -48,7 +49,7 @@ func NewPaymentGatewayServer(dataFile string) *PaymentGatewayServer {
       "alice": "password1",
       "bob":   "password2",
     },
-    // default balances; these may be overwritten if data is loaded
+    // Default balances; will be overwritten if persistent data exists.
     userBalances: map[string]float64{
       "alice": 1000.0,
       "bob":   500.0,
@@ -85,7 +86,7 @@ func (s *PaymentGatewayServer) saveData() {
   s.mu.Lock()
   defer s.mu.Unlock()
   pgData := PGData{
-    UserBalances:         s.userBalances,
+    UserBalances:          s.userBalances,
     ProcessedTransactions: s.processedTransactions,
   }
   data, err := json.MarshalIndent(pgData, "", "  ")
@@ -224,7 +225,7 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
   s.mu.Lock()
   s.processedTransactions[req.IdempotencyKey] = response
   s.mu.Unlock()
-  s.saveData() // persist the updated data
+  s.saveData()
 
   return response, nil
 }
@@ -270,14 +271,16 @@ func authInterceptor(
 }
 
 func main() {
-  // Set up file logging.
+  // Set up file logging: create log directory only if it does not exist.
   logDir := "../logs"
   if _, err := os.Stat(logDir); os.IsNotExist(err) {
     if err := os.MkdirAll(logDir, 0755); err != nil {
       log.Fatalf("Failed to create log directory: %v", err)
     }
   }
-  logFile, err := os.OpenFile(logDir+"/pg_server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+  // Clean log file on each startup (truncate mode).
+  logFilePath := logDir + "/pg_server.log"
+  logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
   if err != nil {
     log.Fatalf("Failed to open log file: %v", err)
   }
@@ -298,9 +301,14 @@ func main() {
   }
   grpcServer := grpc.NewServer(opts...)
 
-  // Create Payment Gateway server with persistence.
-  pgDataFile := "../data/pg_data.json"
-  os.MkdirAll("../data", 0755)
+  // Create data directory if it does not exist.
+  dataDir := "../data"
+  if _, err := os.Stat(dataDir); os.IsNotExist(err) {
+    if err := os.MkdirAll(dataDir, 0755); err != nil {
+      log.Fatalf("Failed to create data directory: %v", err)
+    }
+  }
+  pgDataFile := dataDir + "/pg_data.json"
   pgServer := NewPaymentGatewayServer(pgDataFile)
 
   // Set up client TLS credentials for dialing bank servers.
@@ -318,7 +326,7 @@ func main() {
     ServerName: "localhost",
   })
 
-  // Connect to two bank servers on different ports.
+  // Connect to bank servers.
   bankConnections := map[string]string{
     "BankA": "localhost:50051",
     "BankB": "localhost:50052",

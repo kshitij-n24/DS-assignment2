@@ -4,11 +4,11 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"os"
 	"os/signal"
-	"sync"
 	"syscall"
 
 	"google.golang.org/grpc"
@@ -22,7 +22,6 @@ type BankServer struct {
 
 	name                 string
 	preparedTransactions map[string]float64 // transactionID -> amount
-	mu                   sync.Mutex
 }
 
 func NewBankServer(name string) *BankServer {
@@ -33,9 +32,7 @@ func NewBankServer(name string) *BankServer {
 }
 
 func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
-	bs.mu.Lock()
-	defer bs.mu.Unlock()
-	// If duplicate prepare is received, log and continue.
+	// No extra mutex is needed here if this server is single-threaded per RPC.
 	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
 		log.Printf("[%s] Duplicate prepare for transaction %s", bs.name, req.TransactionId)
 	}
@@ -48,8 +45,6 @@ func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransa
 }
 
 func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
-	bs.mu.Lock()
-	defer bs.mu.Unlock()
 	amount, exists := bs.preparedTransactions[req.TransactionId]
 	if !exists {
 		log.Printf("[%s] Commit failed: transaction %s not found", bs.name, req.TransactionId)
@@ -67,8 +62,6 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 }
 
 func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
-	bs.mu.Lock()
-	defer bs.mu.Unlock()
 	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
 		delete(bs.preparedTransactions, req.TransactionId)
 		log.Printf("[%s] Aborted transaction %s", bs.name, req.TransactionId)
@@ -94,7 +87,8 @@ func main() {
 		}
 	}
 	logFilePath := fmt.Sprintf("%s/%s_server.log", logDir, *bankName)
-	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	// Clean up log file on startup.
+	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
