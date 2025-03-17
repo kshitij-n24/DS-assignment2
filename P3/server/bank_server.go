@@ -88,14 +88,18 @@ func main() {
 
 	// Set up file logging.
 	logDir := "../logs"
-	os.MkdirAll(logDir, 0755)
+	if _, err := os.Stat(logDir); os.IsNotExist(err) {
+		if err := os.MkdirAll(logDir, 0755); err != nil {
+			log.Fatalf("Failed to create log directory: %v", err)
+		}
+	}
 	logFilePath := fmt.Sprintf("%s/%s_server.log", logDir, *bankName)
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
 	}
-	defer logFile.Close()
-	log.SetOutput(logFile)
+	mw := io.MultiWriter(os.Stdout, logFile)
+	log.SetOutput(mw)
 
 	certFile := "../certificates/server.crt"
 	keyFile := "../certificates/server.key"

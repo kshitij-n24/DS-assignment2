@@ -272,13 +272,17 @@ func authInterceptor(
 func main() {
   // Set up file logging.
   logDir := "../logs"
-  os.MkdirAll(logDir, 0755)
+  if _, err := os.Stat(logDir); os.IsNotExist(err) {
+    if err := os.MkdirAll(logDir, 0755); err != nil {
+      log.Fatalf("Failed to create log directory: %v", err)
+    }
+  }
   logFile, err := os.OpenFile(logDir+"/pg_server.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
   if err != nil {
     log.Fatalf("Failed to open log file: %v", err)
   }
-  defer logFile.Close()
-  log.SetOutput(logFile)
+  mw := io.MultiWriter(os.Stdout, logFile)
+  log.SetOutput(mw)
 
   // Load TLS credentials for serving.
   certFile := "../certificates/server.crt"
