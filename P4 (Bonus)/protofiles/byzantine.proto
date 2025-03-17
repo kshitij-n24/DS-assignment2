@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+package byzantine;
+
+// Option to set the Go package name (adjust the import path as needed)
+option go_package = "github.com/yourname/yourrepo/protofiles/byzantinepb";
+
+service ByzantineService {
+  // PropagateOrder is called to send an order (or report) for a given round.
+  rpc PropagateOrder(OrderMessage) returns (Ack) {}
+}
+
+message OrderMessage {
+  int32 sender_id = 1; // ID of the sender
+  int32 round = 2;     // The round number (1 to t+1)
+  string order = 3;    // The order: "Attack" or "Retreat"
+}
+
+message Ack {
+  bool received = 1;   // Simple acknowledgement
+}

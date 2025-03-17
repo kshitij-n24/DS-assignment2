@@ -27,14 +27,27 @@ var (
 	pgClient pb.PaymentGatewayClient
 	// pgConn holds the connection handle.
 	pgConn *grpc.ClientConn
-	// clientMu protects pgClient.
+	// clientMu protects pgClient and pgConn.
 	clientMu sync.Mutex
 )
 
 // connectPaymentGateway continuously attempts to establish a connection to the Payment Gateway.
+// It uses grpc.DialContext with WithBlock() so that a connection is only marked as established if the server responds.
 func connectPaymentGateway(creds credentials.TransportCredentials) {
 	for {
-		conn, err := grpc.Dial("localhost:50060", grpc.WithTransportCredentials(creds))
+		clientMu.Lock()
+		// If we already have a valid client, no need to reconnect.
+		if pgClient != nil {
+			clientMu.Unlock()
+			time.Sleep(10 * time.Second)
+			continue
+		}
+		clientMu.Unlock()
+
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		conn, err := grpc.DialContext(ctx, "localhost:50060", grpc.WithTransportCredentials(creds), grpc.WithBlock())
+		cancel()
+
 		clientMu.Lock()
 		if err == nil {
 			pgConn = conn
@@ -64,37 +77,37 @@ func main() {
 		RootCAs: caCertPool,
 	})
 
-	// Start background goroutine to attempt connection.
+	// Start background goroutine to establish connection.
 	go connectPaymentGateway(creds)
 
-	// Wait briefly to allow initial connection attempts.
-	time.Sleep(2 * time.Second)
+	// Wait briefly for connection attempts.
+	time.Sleep(3 * time.Second)
 
-	// Attempt authentication if connected; otherwise, use a cached token.
+	// Attempt authentication if connected; otherwise, use fallback token.
 	var token string
 	clientMu.Lock()
 	currentClient := pgClient
 	clientMu.Unlock()
 	if currentClient != nil {
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
 		authResp, err := currentClient.Authenticate(ctx, &pb.AuthRequest{
 			Username: "alice",
 			Password: "password1",
 		})
+		cancel()
 		if err != nil || !authResp.Success {
 			log.Printf("[CLIENT] Authentication failed: %v", err)
-			token = "alice-token" // Fallback cached token.
+			token = "alice-token" // Fallback token.
 		} else {
 			token = authResp.Token
 		}
 	} else {
-		log.Println("[CLIENT] Payment Gateway offline at startup. Using cached token 'alice-token'")
+		log.Println("[CLIENT] Payment Gateway offline at startup. Using fallback token 'alice-token'")
 		token = "alice-token"
 	}
 	fmt.Printf("[CLIENT] Using token: %s\n", token)
 
-	// Build an outgoing context with token.
+	// Build outgoing context with token.
 	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	md := metadata.New(map[string]string{"authorization": token})
@@ -119,23 +132,22 @@ func main() {
 	paymentKey := "unique-payment-key-123"
 	paymentReq := &pb.PaymentRequest{
 		Token:          token,
-		ToBank:         "BankB", // Use BankB for payment.
+		ToBank:         "BankB", // Use BankB for this payment.
 		Amount:         100.0,
 		IdempotencyKey: paymentKey,
 	}
 
-	// Process the payment. If Payment Gateway is offline, it will be queued.
+	// Process the payment; if it fails, it will be queued.
 	processPayment(ctxWithMD, paymentReq)
 
-	// Start background goroutine to retry queued payments.
+	// Start a background goroutine to retry queued payments.
 	go retryOfflinePayments(token)
 
-	// Block forever so background goroutines continue to run.
+	// Block forever.
 	select {}
 }
 
-// processPayment sends a payment request if the Payment Gateway is connected;
-// otherwise, it queues the payment request for later processing.
+// processPayment sends a payment request if connected; otherwise, it queues the request.
 func processPayment(ctx context.Context, req *pb.PaymentRequest) {
 	clientMu.Lock()
 	currentClient := pgClient
@@ -146,9 +158,17 @@ func processPayment(ctx context.Context, req *pb.PaymentRequest) {
 		return
 	}
 	resp, err := currentClient.ProcessPayment(ctx, req)
-	if err != nil || !resp.Success {
-		log.Printf("[CLIENT] Payment processing failed: %v, message: %s. Queuing payment with key %s.",
-			err, resp.Message, req.IdempotencyKey)
+	if err != nil {
+		log.Printf("[CLIENT] Payment processing failed: %v. Queuing payment with key %s.", err, req.IdempotencyKey)
+		// Mark connection as broken.
+		clientMu.Lock()
+		pgClient = nil
+		clientMu.Unlock()
+		queuePayment(req)
+		return
+	}
+	if !resp.Success {
+		log.Printf("[CLIENT] Payment processing failed: %s. Queuing payment with key %s.", resp.Message, req.IdempotencyKey)
 		queuePayment(req)
 		return
 	}
@@ -156,20 +176,26 @@ func processPayment(ctx context.Context, req *pb.PaymentRequest) {
 
 	// Idempotency check: resend the same payment.
 	resp2, err := currentClient.ProcessPayment(ctx, req)
-	if err != nil || !resp2.Success {
-		log.Printf("[CLIENT] Payment processing retry failed: %v, message: %s. Queuing payment with key %s.",
-			err, resp2.Message, req.IdempotencyKey)
+	if err != nil {
+		log.Printf("[CLIENT] Payment processing retry failed: %v. Queuing payment with key %s.", err, req.IdempotencyKey)
+		clientMu.Lock()
+		pgClient = nil
+		clientMu.Unlock()
+		queuePayment(req)
+		return
+	}
+	if !resp2.Success {
+		log.Printf("[CLIENT] Payment processing retry failed: %s. Queuing payment with key %s.", resp2.Message, req.IdempotencyKey)
 		queuePayment(req)
 		return
 	}
 	fmt.Printf("[CLIENT] Payment Response on idempotent retry: %s\n", resp2.Message)
 }
 
-// queuePayment adds the given payment request to the offline queue.
+// queuePayment adds the payment request to the offline queue.
 func queuePayment(req *pb.PaymentRequest) {
 	offlineQueue.Lock()
 	defer offlineQueue.Unlock()
-	// Avoid duplicates.
 	for _, r := range offlineQueue.queue {
 		if r.IdempotencyKey == req.IdempotencyKey {
 			log.Printf("[CLIENT] Payment with key %s is already queued", req.IdempotencyKey)
@@ -180,7 +206,7 @@ func queuePayment(req *pb.PaymentRequest) {
 	log.Printf("[CLIENT] Queued payment with key %s for offline processing", req.IdempotencyKey)
 }
 
-// retryOfflinePayments periodically attempts to process all queued payments.
+// retryOfflinePayments periodically retries queued payments.
 func retryOfflinePayments(token string) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
