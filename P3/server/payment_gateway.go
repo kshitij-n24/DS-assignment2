@@ -2,7 +2,10 @@ package main
 
 import (
   "context"
+  "crypto/tls"
+  "crypto/x509"
   "fmt"
+  "io/ioutil"
   "log"
   "net"
   "os"
@@ -241,17 +244,17 @@ func authInterceptor(
 }
 
 func main() {
-  // Updated certificate directory is now "certificates".
+  // Load server TLS credentials for accepting incoming connections.
   certFile := "../certificates/server.crt"
   keyFile := "../certificates/server.key"
-  creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
+  serverCreds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
   if err != nil {
     log.Fatalf("[STARTUP] Failed to load TLS credentials from %s and %s: %v", certFile, keyFile, err)
   }
 
   // Create gRPC server with TLS and interceptors.
   opts := []grpc.ServerOption{
-    grpc.Creds(creds),
+    grpc.Creds(serverCreds),
     grpc.ChainUnaryInterceptor(authInterceptor, loggingInterceptor),
   }
   grpcServer := grpc.NewServer(opts...)
@@ -259,10 +262,27 @@ func main() {
   // Initialize the Payment Gateway service.
   pgServer := NewPaymentGatewayServer()
 
-  // Connect to bank servers.
+  // --- Create client TLS credentials for dialing Bank servers ---
+  // Load CA certificate to trust Bank server certificates.
+  caCertPath := "../certificates/ca.crt"
+  caCert, err := ioutil.ReadFile(caCertPath)
+  if err != nil {
+    log.Fatalf("[STARTUP] Failed to read CA certificate: %v", err)
+  }
+  caCertPool := x509.NewCertPool()
+  if !caCertPool.AppendCertsFromPEM(caCert) {
+    log.Fatalf("[STARTUP] Failed to append CA certificate")
+  }
+  // Use "localhost" as the expected server name (must match SAN in server certificate).
+  clientCreds := credentials.NewTLS(&tls.Config{
+    RootCAs:    caCertPool,
+    ServerName: "localhost",
+  })
+
+  // Connect to bank servers using client TLS credentials.
   bankNames := []string{"BankA", "BankB"}
   for _, bank := range bankNames {
-    conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(creds))
+    conn, err := grpc.Dial("localhost:50051", grpc.WithTransportCredentials(clientCreds))
     if err != nil {
       log.Printf("[BANK-CONNECT] Failed to connect to bank %s: %v", bank, err)
       continue
