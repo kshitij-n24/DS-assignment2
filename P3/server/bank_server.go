@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
-	"crypto/tls"
 	"fmt"
 	"log"
 	"net"
+	"os"
+	"os/signal"
 	"sync"
+	"syscall"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
@@ -17,12 +19,13 @@ import (
 // BankServer implements the BankService.
 type BankServer struct {
 	pb.UnimplementedBankServiceServer
+
 	name                 string
-	preparedTransactions map[string]float64 // transaction ID -> amount
+	preparedTransactions map[string]float64 // transactionID -> amount
 	mu                   sync.Mutex
 }
 
-// NewBankServer creates a new BankServer.
+// NewBankServer creates a new bank server instance.
 func NewBankServer(name string) *BankServer {
 	return &BankServer{
 		name:                 name,
@@ -30,11 +33,11 @@ func NewBankServer(name string) *BankServer {
 	}
 }
 
-// PrepareTransaction simulates a prepare step.
+// PrepareTransaction simulates the prepare phase.
 func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
 	bs.mu.Lock()
 	defer bs.mu.Unlock()
-	// For demonstration, always “prepare” successfully.
+	// Simulate preparation. In production, you might check account limits, etc.
 	bs.preparedTransactions[req.TransactionId] = req.Amount
 	log.Printf("[%s] Prepared transaction %s for amount %.2f", bs.name, req.TransactionId, req.Amount)
 	return &pb.BankTransactionResponse{
@@ -49,6 +52,7 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 	defer bs.mu.Unlock()
 	amount, exists := bs.preparedTransactions[req.TransactionId]
 	if !exists {
+		log.Printf("[%s] Commit failed: transaction %s not found", bs.name, req.TransactionId)
 		return &pb.BankTransactionResponse{
 			Success: false,
 			Message: "Transaction not found for commit",
@@ -68,8 +72,10 @@ func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransact
 	defer bs.mu.Unlock()
 	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
 		delete(bs.preparedTransactions, req.TransactionId)
+		log.Printf("[%s] Aborted transaction %s", bs.name, req.TransactionId)
+	} else {
+		log.Printf("[%s] Abort called on unknown transaction %s", bs.name, req.TransactionId)
 	}
-	log.Printf("[%s] Aborted transaction %s", bs.name, req.TransactionId)
 	return &pb.BankTransactionResponse{
 		Success: true,
 		Message: fmt.Sprintf("Transaction aborted at %s", bs.name),
@@ -77,28 +83,39 @@ func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransact
 }
 
 func main() {
-	// Load TLS credentials.
-	certFile := "../../certificate/server.crt"
-	keyFile := "../../certificate/server.key"
+	// Updated certificate directory is "certificates".
+	certFile := "../certificates/server.crt"
+	keyFile := "../certificates/server.key"
 	creds, err := credentials.NewServerTLSFromFile(certFile, keyFile)
 	if err != nil {
-		log.Fatalf("Failed to load TLS credentials: %v", err)
+		log.Fatalf("[STARTUP] Failed to load TLS credentials from %s and %s: %v", certFile, keyFile, err)
 	}
 
 	opts := []grpc.ServerOption{grpc.Creds(creds)}
 	grpcServer := grpc.NewServer(opts...)
 
-	// In this example the bank server is named "BankA".
+	// Initialize the bank server.
 	bankName := "BankA"
 	bankServer := NewBankServer(bankName)
 	pb.RegisterBankServiceServer(grpcServer, bankServer)
 
-	lis, err := net.Listen("tcp", ":50051")
+	listener, err := net.Listen("tcp", ":50051")
 	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
+		log.Fatalf("[STARTUP] Failed to listen on :50051: %v", err)
 	}
-	log.Printf("%s Bank server listening on :50051", bankName)
-	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("Failed to serve: %v", err)
+	log.Printf("[STARTUP] %s Bank server is listening on :50051", bankName)
+
+	// Handle graceful shutdown.
+	go func() {
+		ch := make(chan os.Signal, 1)
+		signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
+		<-ch
+		log.Printf("[SHUTDOWN] Shutting down %s Bank server...", bankName)
+		grpcServer.GracefulStop()
+		os.Exit(0)
+	}()
+
+	if err := grpcServer.Serve(listener); err != nil {
+		log.Fatalf("[RUNTIME] Failed to serve: %v", err)
 	}
 }

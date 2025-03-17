@@ -11,7 +11,6 @@ import (
 
 	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
 	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
-
 	"google.golang.org/grpc"
 )
 
@@ -38,46 +37,58 @@ func (s *computationalServer) ComputeTask(ctx context.Context, req *pb.ComputeTa
 	return &pb.ComputeTaskResponse{Result: result}, nil
 }
 
-// registerWithLB registers this backend server with the LB server.
+// registerWithLB repeatedly tries to register this backend server with the LB server.
 func registerWithLB(lbAddress, backendAddress string) {
-	conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Failed to connect to LB server: %v", err)
-	}
-	defer conn.Close()
+	for {
+		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
+		if err != nil {
+			log.Printf("Failed to connect to LB server: %v. Retrying in 5 seconds...", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
 
-	client := lbpb.NewLoadBalancerClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-	defer cancel()
+		client := lbpb.NewLoadBalancerClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+		req := &lbpb.RegisterBackendRequest{ServerAddress: backendAddress}
+		res, err := client.RegisterBackend(ctx, req)
+		cancel()
+		conn.Close()
 
-	req := &lbpb.RegisterBackendRequest{ServerAddress: backendAddress}
-	res, err := client.RegisterBackend(ctx, req)
-	if err != nil || !res.Success {
-		log.Fatalf("Failed to register with LB server: %v", err)
+		if err != nil || !res.Success {
+			log.Printf("Failed to register with LB server: %v. Retrying in 5 seconds...", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+		log.Printf("Successfully registered with LB at %s", lbAddress)
+		break
 	}
-	log.Printf("Successfully registered with LB at %s", lbAddress)
 }
 
 // reportLoadPeriodically simulates load reporting to the LB server.
 func reportLoadPeriodically(lbAddress, backendAddress string) {
-	conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Failed to connect to LB server for load reporting: %v", err)
-	}
-	defer conn.Close()
-
-	client := lbpb.NewLoadBalancerClient(conn)
-
 	for {
+		// Dial the LB server each time to ensure a fresh connection.
+		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
+		if err != nil {
+			log.Printf("Failed to connect to LB server for load reporting: %v. Retrying in 5 seconds...", err)
+			time.Sleep(5 * time.Second)
+			continue
+		}
+
+		client := lbpb.NewLoadBalancerClient(conn)
+
 		// Simulate a load value between 0 and 100.
 		load := int32(rand.Intn(100))
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		req := &lbpb.ReportLoadRequest{ServerAddress: backendAddress, Load: load}
-		_, err := client.ReportLoad(ctx, req)
+		_, err = client.ReportLoad(ctx, &lbpb.ReportLoadRequest{ServerAddress: backendAddress, Load: load})
+		cancel()
+		conn.Close()
+
 		if err != nil {
 			log.Printf("Error reporting load: %v", err)
+		} else {
+			log.Printf("Reported load %d for backend %s", load, backendAddress)
 		}
-		cancel()
 		time.Sleep(5 * time.Second)
 	}
 }

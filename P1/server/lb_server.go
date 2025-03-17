@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
-
 	"google.golang.org/grpc"
 )
 
@@ -44,6 +43,7 @@ func (s *LoadBalancerServer) RegisterBackend(ctx context.Context, req *pb.Regist
 		}
 	}
 
+	// Register new backend with initial load 0.
 	s.backends = append(s.backends, BackendInfo{Address: req.ServerAddress, Load: 0})
 	log.Printf("Registered backend: %s", req.ServerAddress)
 	return &pb.RegisterBackendResponse{Success: true}, nil
@@ -72,6 +72,7 @@ func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *pb.GetBestS
 	defer s.mu.Unlock()
 
 	if len(s.backends) == 0 {
+		log.Printf("No backends available")
 		return &pb.GetBestServerResponse{ServerAddress: ""}, nil
 	}
 
