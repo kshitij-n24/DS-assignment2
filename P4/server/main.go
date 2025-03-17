@@ -13,7 +13,7 @@ import (
 
 	"google.golang.org/grpc"
 
-	pb "github.com/kshitij-n24/DS-assignment2/P4 (Bonus)/protofiles"
+	pb "github.com/kshitij-n24/DS-assignment2/P4/protofiles"
 )
 
 // Node represents a general in the Byzantine simulation.
