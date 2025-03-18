@@ -8,26 +8,22 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
+	"regexp"
 	"strings"
+	"time"
 
 	"google.golang.org/grpc"
-	pb "github.com/kshitij-n24/DS-assignment2/P2/protofiles"
+	pb "github.com/<user>/DS-assignment2/P2/protofiles"
 )
 
 // server implements the Worker gRPC service.
 type server struct {
 	pb.UnimplementedWorkerServer
+	grpcServer *grpc.Server
 }
 
-// A simple hash function to partition keys across reducers.
-func ihash(key string, n int) int {
-	hash := 0
-	for _, ch := range key {
-		hash = int(ch) + hash*31
-	}
-	return hash % n
-}
+// Regular expression to extract words (alphanumeric only)
+var wordRegex = regexp.MustCompile(`[a-zA-Z0-9]+`)
 
 // ExecuteTask processes the assigned map or reduce task.
 func (s *server) ExecuteTask(ctx context.Context, req *pb.TaskRequest) (*pb.TaskResponse, error) {
@@ -51,6 +47,17 @@ func (s *server) ExecuteTask(ctx context.Context, req *pb.TaskRequest) (*pb.Task
 	}
 }
 
+// Shutdown handles the Shutdown RPC to gracefully stop the worker.
+func (s *server) Shutdown(ctx context.Context, req *pb.ShutdownRequest) (*pb.ShutdownResponse, error) {
+	log.Printf("Received shutdown request. Shutting down worker.")
+	// Delay a little to allow the RPC response to be sent.
+	go func() {
+		time.Sleep(1 * time.Second)
+		s.grpcServer.GracefulStop()
+	}()
+	return &pb.ShutdownResponse{Success: true, Message: "Shutting down"}, nil
+}
+
 // handleMapTask reads the input file, tokenizes it, and writes intermediate files.
 func handleMapTask(taskID int32, inputFile string, nReducer int, jobType string) error {
 	file, err := os.Open(inputFile)
@@ -59,40 +66,40 @@ func handleMapTask(taskID int32, inputFile string, nReducer int, jobType string)
 	}
 	defer file.Close()
 
-	// Open nReducer files for partitioned output.
-	writers := make([]*os.File, nReducer)
+	// Open nReducer files for partitioned output using buffered writers.
+	writers := make([]*bufio.Writer, nReducer)
+	files := make([]*os.File, nReducer)
 	for i := 0; i < nReducer; i++ {
 		outFileName := fmt.Sprintf("mr-%d-%d", taskID, i)
 		f, err := os.Create(outFileName)
 		if err != nil {
 			return fmt.Errorf("failed to create intermediate file %s: %v", outFileName, err)
 		}
-		writers[i] = f
-		defer f.Close()
+		files[i] = f
+		writers[i] = bufio.NewWriter(f)
 	}
-
+	
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
 		line := scanner.Text()
-		words := strings.Fields(line)
+		// Use regex to extract words (converted to lowercase).
+		words := wordRegex.FindAllString(strings.ToLower(line), -1)
 		for _, word := range words {
-			// Clean the word (e.g., remove punctuation, convert to lowercase).
-			cleaned := strings.ToLower(strings.Trim(word, ".,!?:;\"'()"))
-			if cleaned == "" {
+			if word == "" {
 				continue
 			}
 			// Partition the word to one of the reducers.
-			reducerIdx := ihash(cleaned, nReducer)
+			reducerIdx := ihash(word, nReducer)
 			switch jobType {
 			case "wordcount":
 				// For word count, output (word, 1).
-				_, err := writers[reducerIdx].WriteString(fmt.Sprintf("%s %d\n", cleaned, 1))
+				_, err := writers[reducerIdx].WriteString(fmt.Sprintf("%s %d\n", word, 1))
 				if err != nil {
 					return err
 				}
 			case "invertedindex":
 				// For inverted index, output (word, filename).
-				_, err := writers[reducerIdx].WriteString(fmt.Sprintf("%s %s\n", cleaned, filepath.Base(inputFile)))
+				_, err := writers[reducerIdx].WriteString(fmt.Sprintf("%s %s\n", word, filepath.Base(inputFile)))
 				if err != nil {
 					return err
 				}
@@ -104,6 +111,15 @@ func handleMapTask(taskID int32, inputFile string, nReducer int, jobType string)
 	if err := scanner.Err(); err != nil {
 		return err
 	}
+
+	// Flush and close all buffered writers and files.
+	for i := 0; i < nReducer; i++ {
+		if err := writers[i].Flush(); err != nil {
+			return fmt.Errorf("failed to flush file mr-%d-%d: %v", taskID, i, err)
+		}
+		files[i].Close()
+	}
+
 	log.Printf("Map task %d completed for file %s", taskID, inputFile)
 	return nil
 }
@@ -125,11 +141,13 @@ func handleReduceTask(reduceTaskID int, intermediateFiles []string, jobType stri
 				line := scanner.Text()
 				parts := strings.Fields(line)
 				if len(parts) != 2 {
+					log.Printf("warning: malformed line in file %s: %s", filename, line)
 					continue
 				}
 				word := parts[0]
 				count, err := strconv.Atoi(parts[1])
 				if err != nil {
+					log.Printf("warning: invalid count in file %s: %s", filename, parts[1])
 					continue
 				}
 				wc[word] += count
@@ -165,6 +183,7 @@ func handleReduceTask(reduceTaskID int, intermediateFiles []string, jobType stri
 				line := scanner.Text()
 				parts := strings.Fields(line)
 				if len(parts) != 2 {
+					log.Printf("warning: malformed line in file %s: %s", filename, line)
 					continue
 				}
 				word, fname := parts[0], parts[1]
@@ -201,6 +220,15 @@ func handleReduceTask(reduceTaskID int, intermediateFiles []string, jobType stri
 	return nil
 }
 
+// ihash is a simple hash function to partition keys across reducers.
+func ihash(key string, n int) int {
+	hash := 0
+	for _, ch := range key {
+		hash = int(ch) + hash*31
+	}
+	return hash % n
+}
+
 func main() {
 	if len(os.Args) < 2 {
 		log.Fatalf("Usage: %s <port>", os.Args[0])
@@ -210,10 +238,11 @@ func main() {
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
-	s := grpc.NewServer()
-	pb.RegisterWorkerServer(s, &server{})
+	grpcServer := grpc.NewServer()
+	workerServer := &server{grpcServer: grpcServer}
+	pb.RegisterWorkerServer(grpcServer, workerServer)
 	log.Printf("Worker server listening on port %s", port)
-	if err := s.Serve(lis); err != nil {
+	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("failed to serve: %v", err)
 	}
 }

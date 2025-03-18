@@ -9,12 +9,13 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	pb "github.com/kshitij-n24/DS-assignment2/P3/protofiles"
+	pb "github.com/<user>/DS-assignment2/P3/protofiles"
 )
 
 type BankServer struct {
@@ -22,6 +23,7 @@ type BankServer struct {
 
 	name                 string
 	preparedTransactions map[string]float64 // transactionID -> amount
+	ptMutex              sync.Mutex         // protects preparedTransactions
 }
 
 func NewBankServer(name string) *BankServer {
@@ -32,7 +34,8 @@ func NewBankServer(name string) *BankServer {
 }
 
 func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
-	// No extra mutex is needed here if this server is single-threaded per RPC.
+	bs.ptMutex.Lock()
+	defer bs.ptMutex.Unlock()
 	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
 		log.Printf("[%s] Duplicate prepare for transaction %s", bs.name, req.TransactionId)
 	}
@@ -45,7 +48,12 @@ func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransa
 }
 
 func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
+	bs.ptMutex.Lock()
 	amount, exists := bs.preparedTransactions[req.TransactionId]
+	if exists {
+		delete(bs.preparedTransactions, req.TransactionId)
+	}
+	bs.ptMutex.Unlock()
 	if !exists {
 		log.Printf("[%s] Commit failed: transaction %s not found", bs.name, req.TransactionId)
 		return &pb.BankTransactionResponse{
@@ -53,7 +61,6 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 			Message: "Transaction not found for commit",
 		}, nil
 	}
-	delete(bs.preparedTransactions, req.TransactionId)
 	log.Printf("[%s] Committed transaction %s for amount %.2f", bs.name, req.TransactionId, amount)
 	return &pb.BankTransactionResponse{
 		Success: true,
@@ -62,16 +69,29 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 }
 
 func (bs *BankServer) AbortTransaction(ctx context.Context, req *pb.BankTransactionRequest) (*pb.BankTransactionResponse, error) {
-	if _, exists := bs.preparedTransactions[req.TransactionId]; exists {
+	bs.ptMutex.Lock()
+	_, exists := bs.preparedTransactions[req.TransactionId]
+	if exists {
 		delete(bs.preparedTransactions, req.TransactionId)
-		log.Printf("[%s] Aborted transaction %s", bs.name, req.TransactionId)
-	} else {
-		log.Printf("[%s] Abort called on unknown transaction %s", bs.name, req.TransactionId)
 	}
+	bs.ptMutex.Unlock()
+	log.Printf("[%s] Aborted transaction %s", bs.name, req.TransactionId)
 	return &pb.BankTransactionResponse{
 		Success: true,
 		Message: fmt.Sprintf("Transaction aborted at %s", bs.name),
 	}, nil
+}
+
+func loggingInterceptor(
+	ctx context.Context,
+	req interface{},
+	info *grpc.UnaryServerInfo,
+	handler grpc.UnaryHandler,
+) (interface{}, error) {
+	log.Printf("[BANK-INTERCEPTOR] Request: Method=%s, Request=%+v", info.FullMethod, req)
+	resp, err := handler(ctx, req)
+	log.Printf("[BANK-INTERCEPTOR] Response: Method=%s, Response=%+v, Error=%v", info.FullMethod, resp, err)
+	return resp, err
 }
 
 func main() {
@@ -87,7 +107,6 @@ func main() {
 		}
 	}
 	logFilePath := fmt.Sprintf("%s/%s_server.log", logDir, *bankName)
-	// Clean up log file on startup.
 	logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
 	if err != nil {
 		log.Fatalf("Failed to open log file: %v", err)
@@ -102,7 +121,10 @@ func main() {
 		log.Fatalf("[STARTUP] Failed to load TLS credentials from %s and %s: %v", certFile, keyFile, err)
 	}
 
-	opts := []grpc.ServerOption{grpc.Creds(creds)}
+	opts := []grpc.ServerOption{
+		grpc.Creds(creds),
+		grpc.ChainUnaryInterceptor(loggingInterceptor),
+	}
 	grpcServer := grpc.NewServer(opts...)
 
 	bankServer := NewBankServer(*bankName)

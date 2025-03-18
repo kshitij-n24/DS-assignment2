@@ -50,8 +50,22 @@ message BankTransactionResponse {
   string message = 2;
 }
 
+// Request/response for client registration.
+message RegisterClientRequest {
+  string username = 1;
+  string password = 2;
+  string bank_account = 3;
+  double initial_balance = 4;
+}
+
+message RegisterClientResponse {
+  bool success = 1;
+  string message = 2;
+}
+
 // The Payment Gateway service.
 service PaymentGateway {
+  rpc RegisterClient(RegisterClientRequest) returns (RegisterClientResponse);
   rpc Authenticate(AuthRequest) returns (AuthResponse);
   rpc GetBalance(BalanceRequest) returns (BalanceResponse);
   rpc ProcessPayment(PaymentRequest) returns (PaymentResponse);

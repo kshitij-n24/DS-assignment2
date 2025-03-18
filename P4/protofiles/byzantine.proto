@@ -5,17 +5,20 @@ package byzantine;
 // Option to set the Go package name (adjust the import path as needed)
 option go_package = "./";
 
+// ByzantineService defines the RPC for propagating orders.
 service ByzantineService {
   // PropagateOrder is called to send an order (or report) for a given round.
   rpc PropagateOrder(OrderMessage) returns (Ack) {}
 }
 
+// OrderMessage defines a message carrying an order for a given round.
 message OrderMessage {
   int32 sender_id = 1; // ID of the sender
   int32 round = 2;     // The round number (1 to t+1)
   string order = 3;    // The order: "Attack" or "Retreat"
 }
 
+// Ack is a simple acknowledgement message.
 message Ack {
-  bool received = 1;   // Simple acknowledgement
+  bool received = 1;   // Acknowledgement flag
 }

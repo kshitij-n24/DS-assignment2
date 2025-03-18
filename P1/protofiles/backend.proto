@@ -2,20 +2,20 @@ syntax = "proto3";
 
 package backend;
 
-// option go_package = "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend;backend";
 option go_package = "./backend";
 
-// The computational service that performs a simple arithmetic task.
+// The computational service that performs an arithmetic or recursive computation.
 service ComputationalService {
   // Performs a compute operation.
   rpc ComputeTask(ComputeTaskRequest) returns (ComputeTaskResponse);
 }
 
 // Request message with two operands and an operation.
+// For the "hanoi" operation, field A represents the number of disks.
 message ComputeTaskRequest {
   int32 a = 1;
   int32 b = 2;
-  string operation = 3; // e.g. "add", "multiply"
+  string operation = 3; // e.g., "add", "multiply", "hanoi"
 }
 
 // Response message containing the result.

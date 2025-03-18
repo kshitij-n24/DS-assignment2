@@ -5,6 +5,7 @@ import (
   "crypto/tls"
   "crypto/x509"
   "encoding/json"
+  "flag"
   "fmt"
   "io"
   "io/ioutil"
@@ -20,36 +21,36 @@ import (
   "google.golang.org/grpc/credentials"
   "google.golang.org/grpc/metadata"
 
-  pb "github.com/kshitij-n24/DS-assignment2/P3/protofiles"
+  pb "github.com/<user>/DS-assignment2/P3/protofiles"
 )
 
 // PGData represents the persistent data for the Payment Gateway.
 type PGData struct {
   UserBalances          map[string]float64            `json:"user_balances"`
   ProcessedTransactions map[string]*pb.PaymentResponse `json:"processed_transactions"`
+  UserCreds             map[string]string             `json:"user_creds"`
 }
 
 // PaymentGatewayServer implements the PaymentGateway service.
 type PaymentGatewayServer struct {
   pb.UnimplementedPaymentGatewayServer
 
-  userCreds             map[string]string            // username -> password
-  userBalances          map[string]float64           // username -> balance
+  userCreds             map[string]string              // username -> password
+  userBalances          map[string]float64             // username -> balance
   processedTransactions map[string]*pb.PaymentResponse // idempotency key -> PaymentResponse
   bankConns             map[string]pb.BankServiceClient
 
-  mu       sync.Mutex
-  dataFile string
+  mu          sync.Mutex
+  dataFile    string
+  bankTimeout time.Duration // configurable timeout for bank transactions
 }
 
-// NewPaymentGatewayServer creates a new Payment Gateway server and loads persistent data.
-func NewPaymentGatewayServer(dataFile string) *PaymentGatewayServer {
+func NewPaymentGatewayServer(dataFile string, bankTimeout time.Duration) *PaymentGatewayServer {
   s := &PaymentGatewayServer{
     userCreds: map[string]string{
       "alice": "password1",
       "bob":   "password2",
     },
-    // Default balances; will be overwritten if persistent data exists.
     userBalances: map[string]float64{
       "alice": 1000.0,
       "bob":   500.0,
@@ -57,6 +58,7 @@ func NewPaymentGatewayServer(dataFile string) *PaymentGatewayServer {
     processedTransactions: make(map[string]*pb.PaymentResponse),
     bankConns:             make(map[string]pb.BankServiceClient),
     dataFile:              dataFile,
+    bankTimeout:           bankTimeout,
   }
   s.loadData()
   return s
@@ -78,6 +80,7 @@ func (s *PaymentGatewayServer) loadData() {
   }
   s.userBalances = pgData.UserBalances
   s.processedTransactions = pgData.ProcessedTransactions
+  s.userCreds = pgData.UserCreds
   log.Printf("[PERSISTENCE] Data loaded successfully")
 }
 
@@ -88,6 +91,7 @@ func (s *PaymentGatewayServer) saveData() {
   pgData := PGData{
     UserBalances:          s.userBalances,
     ProcessedTransactions: s.processedTransactions,
+    UserCreds:             s.userCreds,
   }
   data, err := json.MarshalIndent(pgData, "", "  ")
   if err != nil {
@@ -100,6 +104,26 @@ func (s *PaymentGatewayServer) saveData() {
   } else {
     log.Printf("[PERSISTENCE] Data saved successfully")
   }
+}
+
+// RegisterClient registers a new client with bank account details.
+func (s *PaymentGatewayServer) RegisterClient(ctx context.Context, req *pb.RegisterClientRequest) (*pb.RegisterClientResponse, error) {
+  s.mu.Lock()
+  defer s.mu.Unlock()
+  if _, exists := s.userCreds[req.Username]; exists {
+    return &pb.RegisterClientResponse{
+      Success: false,
+      Message: "User already registered",
+    }, nil
+  }
+  s.userCreds[req.Username] = req.Password
+  s.userBalances[req.Username] = req.InitialBalance
+  log.Printf("[REGISTER] User %s registered with initial balance %.2f and bank account %s", req.Username, req.InitialBalance, req.BankAccount)
+  s.saveData()
+  return &pb.RegisterClientResponse{
+    Success: true,
+    Message: "Registration successful",
+  }, nil
 }
 
 // Authenticate validates credentials and returns a token.
@@ -166,7 +190,6 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
     return &pb.PaymentResponse{Success: false, Message: "Insufficient funds"}, nil
   }
 
-  // Use BankA as sender and the bank specified in req.ToBank as receiver.
   senderBank, ok := s.bankConns["BankA"]
   if !ok {
     return &pb.PaymentResponse{Success: false, Message: "Sender bank connection not available"}, nil
@@ -182,18 +205,18 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
     Amount:        req.Amount,
   }
 
-  ctx2, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+  // Prepare phase.
+  prepareCtx, cancel := context.WithTimeout(context.Background(), s.bankTimeout)
   defer cancel()
-
   log.Printf("[2PC] Initiating prepare phase for transaction %s", transactionID)
-  senderPrep, err := senderBank.PrepareTransaction(ctx2, prepareReq)
+  senderPrep, err := senderBank.PrepareTransaction(prepareCtx, prepareReq)
   if err != nil || !senderPrep.Success {
     log.Printf("[2PC] Sender bank prepare failed for transaction %s: %v", transactionID, err)
     senderBank.AbortTransaction(context.Background(), prepareReq)
     return &pb.PaymentResponse{Success: false, Message: "Sender bank preparation failed"}, nil
   }
 
-  receiverPrep, err := receiverBank.PrepareTransaction(ctx2, prepareReq)
+  receiverPrep, err := receiverBank.PrepareTransaction(prepareCtx, prepareReq)
   if err != nil || !receiverPrep.Success {
     log.Printf("[2PC] Receiver bank prepare failed for transaction %s: %v", transactionID, err)
     senderBank.AbortTransaction(context.Background(), prepareReq)
@@ -201,21 +224,45 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
     return &pb.PaymentResponse{Success: false, Message: "Receiver bank preparation failed"}, nil
   }
 
-  log.Printf("[2PC] Commit phase for transaction %s", transactionID)
-  senderCommit, err := senderBank.CommitTransaction(ctx2, prepareReq)
-  if err != nil || !senderCommit.Success {
-    log.Printf("[2PC] Sender bank commit failed for transaction %s: %v", transactionID, err)
-    senderBank.AbortTransaction(context.Background(), prepareReq)
-    receiverBank.AbortTransaction(context.Background(), prepareReq)
-    return &pb.PaymentResponse{Success: false, Message: "Sender bank commit failed"}, nil
+  // Commit phase: perform commits concurrently.
+  commitCtx, cancelCommit := context.WithTimeout(context.Background(), s.bankTimeout)
+  defer cancelCommit()
+
+  type commitResult struct {
+    resp *pb.BankTransactionResponse
+    err  error
+  }
+  resultCh := make(chan commitResult, 2)
+
+  go func() {
+    resp, err := senderBank.CommitTransaction(commitCtx, prepareReq)
+    resultCh <- commitResult{resp: resp, err: err}
+  }()
+
+  go func() {
+    resp, err := receiverBank.CommitTransaction(commitCtx, prepareReq)
+    resultCh <- commitResult{resp: resp, err: err}
+  }()
+
+  var senderCommit, receiverCommit *pb.BankTransactionResponse
+  for i := 0; i < 2; i++ {
+    res := <-resultCh
+    if res.err != nil || !res.resp.Success {
+      // Abort both banks.
+      log.Printf("[2PC] Commit phase failed for transaction %s: %v", transactionID, res.err)
+      senderBank.AbortTransaction(context.Background(), prepareReq)
+      receiverBank.AbortTransaction(context.Background(), prepareReq)
+      return &pb.PaymentResponse{Success: false, Message: "Bank commit failed"}, nil
+    }
+    // Determine which bank committed.
+    if senderCommit == nil {
+      senderCommit = res.resp
+    } else {
+      receiverCommit = res.resp
+    }
   }
 
-  receiverCommit, err := receiverBank.CommitTransaction(ctx2, prepareReq)
-  if err != nil || !receiverCommit.Success {
-    log.Printf("[2PC] Receiver bank commit failed for transaction %s: %v", transactionID, err)
-    return &pb.PaymentResponse{Success: false, Message: "Receiver bank commit failed"}, nil
-  }
-
+  log.Printf("[2PC] Both banks committed transaction %s", transactionID)
   s.mu.Lock()
   s.userBalances[username] -= req.Amount
   s.mu.Unlock()
@@ -256,7 +303,8 @@ func authInterceptor(
   info *grpc.UnaryServerInfo,
   handler grpc.UnaryHandler,
 ) (interface{}, error) {
-  if info.FullMethod == "/payment.PaymentGateway/Authenticate" {
+  // Allow registration and authentication without token.
+  if info.FullMethod == "/payment.PaymentGateway/Authenticate" || info.FullMethod == "/payment.PaymentGateway/RegisterClient" {
     return handler(ctx, req)
   }
   md, ok := metadata.FromIncomingContext(ctx)
@@ -267,18 +315,21 @@ func authInterceptor(
   if len(tokens) == 0 || tokens[0] == "" {
     return nil, fmt.Errorf("Missing authorization token")
   }
+  // Optionally, token format validation can be added here.
   return handler(ctx, req)
 }
 
 func main() {
-  // Set up file logging: create log directory only if it does not exist.
+  bankTimeoutFlag := flag.Int("bank_timeout", 5, "Timeout (in seconds) for bank transactions")
+  flag.Parse()
+
+  // Set up file logging.
   logDir := "../logs"
   if _, err := os.Stat(logDir); os.IsNotExist(err) {
     if err := os.MkdirAll(logDir, 0755); err != nil {
       log.Fatalf("Failed to create log directory: %v", err)
     }
   }
-  // Clean log file on each startup (truncate mode).
   logFilePath := logDir + "/pg_server.log"
   logFile, err := os.OpenFile(logFilePath, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0666)
   if err != nil {
@@ -309,7 +360,8 @@ func main() {
     }
   }
   pgDataFile := dataDir + "/pg_data.json"
-  pgServer := NewPaymentGatewayServer(pgDataFile)
+  bankTimeout := time.Duration(*bankTimeoutFlag) * time.Second
+  pgServer := NewPaymentGatewayServer(pgDataFile, bankTimeout)
 
   // Set up client TLS credentials for dialing bank servers.
   caCertPath := "../certificates/ca.crt"

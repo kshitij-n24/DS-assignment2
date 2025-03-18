@@ -1,4 +1,3 @@
-// server/main.go:
 package main
 
 import (
@@ -7,12 +6,13 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
 
 	"google.golang.org/grpc"
-	pb "github.com/kshitij-n24/DS-assignment2/P2/protofiles"
+	pb "github.com/<user>/DS-assignment2/P2/protofiles"
 )
 
 // WorkerInfo represents a worker and its current load.
@@ -91,15 +91,33 @@ func (wm *WorkerManager) ReleaseWorker(worker *WorkerInfo) {
 	heap.Fix(&wm.workers, worker.index)
 }
 
+// dialWorker attempts to dial a worker using context with timeout and returns the connection.
+func dialWorker(workerAddr string) (*grpc.ClientConn, error) {
+	var conn *grpc.ClientConn
+	var err error
+	maxRetries := 3
+	for attempt := 0; attempt < maxRetries; attempt++ {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		conn, err = grpc.DialContext(ctx, workerAddr, grpc.WithInsecure(), grpc.WithBlock())
+		cancel()
+		if err == nil {
+			return conn, nil
+		}
+		log.Printf("Attempt %d: failed to connect to worker %s: %v", attempt+1, workerAddr, err)
+		time.Sleep(2 * time.Second)
+	}
+	return nil, err
+}
+
 // assignMapTask calls the ExecuteTask RPC on a worker for a map task.
 func assignMapTask(taskID int, inputFile string, nReducer int, jobType string, wm *WorkerManager, wg *sync.WaitGroup) {
 	defer wg.Done()
 	worker := wm.GetWorker()
 	workerAddr := worker.addr
 
-	conn, err := grpc.Dial(workerAddr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(time.Second*10))
+	conn, err := dialWorker(workerAddr)
 	if err != nil {
-		log.Printf("failed to connect to worker %s: %v", workerAddr, err)
+		log.Printf("Map task %d: could not connect to worker %s after retries: %v", taskID, workerAddr, err)
 		wm.ReleaseWorker(worker)
 		return
 	}
@@ -112,7 +130,7 @@ func assignMapTask(taskID int, inputFile string, nReducer int, jobType string, w
 		NReducer:  int32(nReducer),
 		JobType:   jobType,
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := client.ExecuteTask(ctx, req)
 	if err != nil {
@@ -129,9 +147,9 @@ func assignReduceTask(reducerID int, intermediateFiles []string, jobType string,
 	worker := wm.GetWorker()
 	workerAddr := worker.addr
 
-	conn, err := grpc.Dial(workerAddr, grpc.WithInsecure(), grpc.WithBlock(), grpc.WithTimeout(time.Second*10))
+	conn, err := dialWorker(workerAddr)
 	if err != nil {
-		log.Printf("failed to connect to worker %s: %v", workerAddr, err)
+		log.Printf("Reduce task %d: could not connect to worker %s after retries: %v", reducerID, workerAddr, err)
 		wm.ReleaseWorker(worker)
 		return
 	}
@@ -144,7 +162,7 @@ func assignReduceTask(reducerID int, intermediateFiles []string, jobType string,
 		JobType:           jobType,
 		ReduceTaskId:      int32(reducerID),
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := client.ExecuteTask(ctx, req)
 	if err != nil {
@@ -153,6 +171,27 @@ func assignReduceTask(reducerID int, intermediateFiles []string, jobType string,
 		log.Printf("Reduce task %d response from worker %s: %s", reducerID, workerAddr, resp.Message)
 	}
 	wm.ReleaseWorker(worker)
+}
+
+// shutdownWorkers sends the Shutdown RPC to all workers.
+func shutdownWorkers(workerAddrs []string) {
+	for _, addr := range workerAddrs {
+		conn, err := dialWorker(addr)
+		if err != nil {
+			log.Printf("Shutdown: could not connect to worker %s: %v", addr, err)
+			continue
+		}
+		client := pb.NewWorkerClient(conn)
+		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+		resp, err := client.Shutdown(ctx, &pb.ShutdownRequest{})
+		cancel()
+		if err != nil {
+			log.Printf("Shutdown RPC failed for worker %s: %v", addr, err)
+		} else {
+			log.Printf("Worker %s shutdown response: %s", addr, resp.Message)
+		}
+		conn.Close()
+	}
 }
 
 func main() {
@@ -199,4 +238,8 @@ func main() {
 	}
 	wg.Wait()
 	log.Printf("All reduce tasks completed. Job done.")
+
+	// Shutdown all workers.
+	log.Printf("Shutting down all workers...")
+	shutdownWorkers(workerAddrs)
 }

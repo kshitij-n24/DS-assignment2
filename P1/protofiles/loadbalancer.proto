@@ -2,53 +2,50 @@ syntax = "proto3";
 
 package lb;
 
-// option go_package = "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb;lb";
 option go_package = "./lb";
 
-// Enumeration for load balancing policies.
+// Enum for balancing policies.
 enum BalancingPolicy {
-  PICK_FIRST = 0;
-  ROUND_ROBIN = 1;
-  LEAST_LOAD = 2;
+  BalancingPolicy_UNSPECIFIED = 0;
+  BalancingPolicy_PICK_FIRST = 1;
+  BalancingPolicy_ROUND_ROBIN = 2;
+  BalancingPolicy_LEAST_LOAD = 3;
 }
 
-// Request from client asking for a backend server.
-message GetBestServerRequest {
-  BalancingPolicy policy = 1;
-}
-
-// Response containing the selected backend server address.
-message GetBestServerResponse {
-  string server_address = 1;
-}
-
-// Request from a backend server to register itself.
+// Request message for backend registration.
 message RegisterBackendRequest {
   string server_address = 1;
 }
 
-// Response for the backend registration.
+// Response message for backend registration.
 message RegisterBackendResponse {
   bool success = 1;
 }
 
-// Request from a backend server to report its current load.
+// Request message for reporting load.
 message ReportLoadRequest {
   string server_address = 1;
   int32 load = 2;
 }
 
-// Response for the load reporting.
+// Response message for reporting load.
 message ReportLoadResponse {
   bool success = 1;
 }
 
-// Service definition for the Load Balancer.
+// Request message for querying the best backend.
+message GetBestServerRequest {
+  BalancingPolicy policy = 1;
+}
+
+// Response message with the best backend server address.
+message GetBestServerResponse {
+  string server_address = 1;
+}
+
+// The Load Balancer service definition.
 service LoadBalancer {
-  // For clients to query the best server.
-  rpc GetBestServer(GetBestServerRequest) returns (GetBestServerResponse);
-  // For backend servers to register.
   rpc RegisterBackend(RegisterBackendRequest) returns (RegisterBackendResponse);
-  // For backend servers to report load.
   rpc ReportLoad(ReportLoadRequest) returns (ReportLoadResponse);
+  rpc GetBestServer(GetBestServerRequest) returns (GetBestServerResponse);
 }

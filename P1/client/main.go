@@ -7,17 +7,41 @@ import (
 	"log"
 	"time"
 
-	backendpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
-	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
+	backendpb "github.com/<user>/DS-assignment2/P1/protofiles/backend"
+	lbpb "github.com/<user>/DS-assignment2/P1/protofiles/lb"
 
 	"google.golang.org/grpc"
 )
 
+const (
+	retryAttempts = 3
+	retryDelay    = 2 * time.Second
+)
+
+func dialWithRetries(address string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
+	var conn *grpc.ClientConn
+	var err error
+	for i := 0; i < retryAttempts; i++ {
+		conn, err = grpc.Dial(address, opts...)
+		if err == nil {
+			return conn, nil
+		}
+		log.Printf("Attempt %d: Failed to dial %s: %v", i+1, address, err)
+		time.Sleep(retryDelay)
+	}
+	return nil, err
+}
+
 func main() {
 	var lbAddress string
 	var policy string
+	var op string
+	var a, b int
 	flag.StringVar(&lbAddress, "lb", "localhost:50051", "Load Balancer address")
 	flag.StringVar(&policy, "policy", "PICK_FIRST", "Balancing policy: PICK_FIRST, ROUND_ROBIN, LEAST_LOAD")
+	flag.StringVar(&op, "operation", "add", "Operation for compute task: add, multiply, hanoi")
+	flag.IntVar(&a, "a", 10, "First operand (or number of disks for hanoi)")
+	flag.IntVar(&b, "b", 20, "Second operand (ignored for hanoi)")
 	flag.Parse()
 
 	// Map policy string to proto enum.
@@ -34,15 +58,15 @@ func main() {
 		balPolicy = lbpb.BalancingPolicy_PICK_FIRST
 	}
 
-	// Connect to the LB server.
-	lbConn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
+	// Connect to the LB server with retries.
+	lbConn, err := dialWithRetries(lbAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to LB server: %v", err)
 	}
 	defer lbConn.Close()
 
 	lbClient := lbpb.NewLoadBalancerClient(lbConn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 
 	// Query the LB server for the best backend.
@@ -58,27 +82,27 @@ func main() {
 
 	log.Printf("Using backend server: %s", getRes.ServerAddress)
 
-	// Connect to the selected backend server.
-	backendConn, err := grpc.Dial(getRes.ServerAddress, grpc.WithInsecure())
+	// Connect to the selected backend server with retries.
+	backendConn, err := dialWithRetries(getRes.ServerAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to backend server: %v", err)
 	}
 	defer backendConn.Close()
 
 	backendClient := backendpb.NewComputationalServiceClient(backendConn)
-	// Send a sample compute task (e.g., adding 10 + 20).
-	compCtx, compCancel := context.WithTimeout(context.Background(), 2*time.Second)
+	compCtx, compCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer compCancel()
 
 	req := &backendpb.ComputeTaskRequest{
-		A:         10,
-		B:         20,
-		Operation: "add",
+		A:         int32(a),
+		B:         int32(b),
+		Operation: op,
 	}
+	start := time.Now()
 	res, err := backendClient.ComputeTask(compCtx, req)
 	if err != nil {
 		log.Fatalf("ComputeTask failed: %v", err)
 	}
-
-	fmt.Printf("Compute result: %d\n", res.Result)
+	latency := time.Since(start)
+	fmt.Printf("Compute result: %d (latency: %v)\n", res.Result, latency)
 }
