@@ -1,0 +1,12 @@
+2025/03/19 01:06:44 Node 4: gRPC server listening on :50054
+2025/03/19 01:06:46 Node 4: starting simulation for 2 rounds...
+2025/03/19 01:06:46 Node 4: Round 1 - Commander Broadcast
+2025/03/19 01:06:46 Node 4: received message from Node 1 for round 1: Attack
+2025/03/19 01:06:46 Node 4: decision after round 1: Attack
+2025/03/19 01:06:47 Node 4: received message from Node 1 for round 2: Attack
+2025/03/19 01:06:47 Node 4: received message from Node 2 for round 2: Attack
+2025/03/19 01:06:47 Node 4: received message from Node 3 for round 2: Retreat
+2025/03/19 01:06:47 Node 4: Round 2 - Cross-Verification
+2025/03/19 01:06:47 Node 4: decision after round 2: Attack
+2025/03/19 01:06:48 Node 4: FINAL decision: Attack
+2025/03/19 01:06:48 Node 4: simulation complete. Shutting down in 2 seconds...

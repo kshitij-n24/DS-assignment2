@@ -39,9 +39,9 @@ func main() {
 	var a, b int
 	flag.StringVar(&lbAddress, "lb", "localhost:50051", "Load Balancer address")
 	flag.StringVar(&policy, "policy", "PICK_FIRST", "Balancing policy: PICK_FIRST, ROUND_ROBIN, LEAST_LOAD")
-	flag.StringVar(&op, "operation", "add", "Operation for compute task: add, multiply, hanoi")
-	flag.IntVar(&a, "a", 10, "First operand (or number of disks for hanoi)")
-	flag.IntVar(&b, "b", 20, "Second operand (ignored for hanoi)")
+	flag.StringVar(&op, "operation", "loop", "Operation for compute task: loop, add, multiply")
+	flag.IntVar(&a, "a", 50, "First operand (or multiplier for 'loop')")
+	flag.IntVar(&b, "b", 0, "Second operand (ignored for 'loop')")
 	flag.Parse()
 
 	// Map policy string to proto enum.
@@ -58,51 +58,55 @@ func main() {
 		balPolicy = lbpb.BalancingPolicy_PICK_FIRST
 	}
 
-	// Connect to the LB server with retries.
+	// Connect to the LB server.
 	lbConn, err := dialWithRetries(lbAddress, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to LB server: %v", err)
 	}
 	defer lbConn.Close()
-
 	lbClient := lbpb.NewLoadBalancerClient(lbConn)
+
+	// Query LB server for the best backend.
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-
-	// Query the LB server for the best backend.
 	getReq := &lbpb.GetBestServerRequest{Policy: balPolicy}
 	getRes, err := lbClient.GetBestServer(ctx, getReq)
 	if err != nil {
 		log.Fatalf("Failed to get best server from LB: %v", err)
 	}
-
 	if getRes.ServerAddress == "" {
 		log.Fatalf("No available backend servers")
 	}
+	backendAddr := getRes.ServerAddress
+	backendLoad := getRes.Load
 
-	log.Printf("Using backend server: %s", getRes.ServerAddress)
-
-	// Connect to the selected backend server with retries.
-	backendConn, err := dialWithRetries(getRes.ServerAddress, grpc.WithInsecure())
+	// Connect to the selected backend.
+	backendConn, err := dialWithRetries(backendAddr, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("Failed to connect to backend server: %v", err)
 	}
 	defer backendConn.Close()
-
 	backendClient := backendpb.NewComputationalServiceClient(backendConn)
+
+	// Send compute request and measure response time.
 	compCtx, compCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer compCancel()
-
 	req := &backendpb.ComputeTaskRequest{
 		A:         int32(a),
 		B:         int32(b),
 		Operation: op,
 	}
 	start := time.Now()
-	res, err := backendClient.ComputeTask(compCtx, req)
+	_, err = backendClient.ComputeTask(compCtx, req)
 	if err != nil {
 		log.Fatalf("ComputeTask failed: %v", err)
 	}
-	latency := time.Since(start)
-	fmt.Printf("Compute result: %d (latency: %v)\n", res.Result, latency)
+	latency := time.Since(start).Milliseconds()
+
+	// Get current timestamp.
+	timestamp := time.Now().Unix()
+
+	// Print a CSV line with fields:
+	// timestamp,client_id,policy,operation,a,b,response_time_ms,backend_address,backend_load
+	fmt.Printf("%d,NA,%s,%s,%d,%d,%d,%s,%d\n", timestamp, policy, op, a, b, latency, backendAddr, backendLoad)
 }

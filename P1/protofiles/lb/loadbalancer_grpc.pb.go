@@ -19,23 +19,20 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	LoadBalancer_GetBestServer_FullMethodName   = "/lb.LoadBalancer/GetBestServer"
 	LoadBalancer_RegisterBackend_FullMethodName = "/lb.LoadBalancer/RegisterBackend"
 	LoadBalancer_ReportLoad_FullMethodName      = "/lb.LoadBalancer/ReportLoad"
+	LoadBalancer_GetBestServer_FullMethodName   = "/lb.LoadBalancer/GetBestServer"
 )
 
 // LoadBalancerClient is the client API for LoadBalancer service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// Service definition for the Load Balancer.
+// The Load Balancer service definition.
 type LoadBalancerClient interface {
-	// For clients to query the best server.
-	GetBestServer(ctx context.Context, in *GetBestServerRequest, opts ...grpc.CallOption) (*GetBestServerResponse, error)
-	// For backend servers to register.
 	RegisterBackend(ctx context.Context, in *RegisterBackendRequest, opts ...grpc.CallOption) (*RegisterBackendResponse, error)
-	// For backend servers to report load.
 	ReportLoad(ctx context.Context, in *ReportLoadRequest, opts ...grpc.CallOption) (*ReportLoadResponse, error)
+	GetBestServer(ctx context.Context, in *GetBestServerRequest, opts ...grpc.CallOption) (*GetBestServerResponse, error)
 }
 
 type loadBalancerClient struct {
@@ -44,16 +41,6 @@ type loadBalancerClient struct {
 
 func NewLoadBalancerClient(cc grpc.ClientConnInterface) LoadBalancerClient {
 	return &loadBalancerClient{cc}
-}
-
-func (c *loadBalancerClient) GetBestServer(ctx context.Context, in *GetBestServerRequest, opts ...grpc.CallOption) (*GetBestServerResponse, error) {
-	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetBestServerResponse)
-	err := c.cc.Invoke(ctx, LoadBalancer_GetBestServer_FullMethodName, in, out, cOpts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
 }
 
 func (c *loadBalancerClient) RegisterBackend(ctx context.Context, in *RegisterBackendRequest, opts ...grpc.CallOption) (*RegisterBackendResponse, error) {
@@ -76,18 +63,25 @@ func (c *loadBalancerClient) ReportLoad(ctx context.Context, in *ReportLoadReque
 	return out, nil
 }
 
+func (c *loadBalancerClient) GetBestServer(ctx context.Context, in *GetBestServerRequest, opts ...grpc.CallOption) (*GetBestServerResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetBestServerResponse)
+	err := c.cc.Invoke(ctx, LoadBalancer_GetBestServer_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // LoadBalancerServer is the server API for LoadBalancer service.
 // All implementations must embed UnimplementedLoadBalancerServer
 // for forward compatibility.
 //
-// Service definition for the Load Balancer.
+// The Load Balancer service definition.
 type LoadBalancerServer interface {
-	// For clients to query the best server.
-	GetBestServer(context.Context, *GetBestServerRequest) (*GetBestServerResponse, error)
-	// For backend servers to register.
 	RegisterBackend(context.Context, *RegisterBackendRequest) (*RegisterBackendResponse, error)
-	// For backend servers to report load.
 	ReportLoad(context.Context, *ReportLoadRequest) (*ReportLoadResponse, error)
+	GetBestServer(context.Context, *GetBestServerRequest) (*GetBestServerResponse, error)
 	mustEmbedUnimplementedLoadBalancerServer()
 }
 
@@ -98,14 +92,14 @@ type LoadBalancerServer interface {
 // pointer dereference when methods are called.
 type UnimplementedLoadBalancerServer struct{}
 
-func (UnimplementedLoadBalancerServer) GetBestServer(context.Context, *GetBestServerRequest) (*GetBestServerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method GetBestServer not implemented")
-}
 func (UnimplementedLoadBalancerServer) RegisterBackend(context.Context, *RegisterBackendRequest) (*RegisterBackendResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method RegisterBackend not implemented")
 }
 func (UnimplementedLoadBalancerServer) ReportLoad(context.Context, *ReportLoadRequest) (*ReportLoadResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ReportLoad not implemented")
+}
+func (UnimplementedLoadBalancerServer) GetBestServer(context.Context, *GetBestServerRequest) (*GetBestServerResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetBestServer not implemented")
 }
 func (UnimplementedLoadBalancerServer) mustEmbedUnimplementedLoadBalancerServer() {}
 func (UnimplementedLoadBalancerServer) testEmbeddedByValue()                      {}
@@ -126,24 +120,6 @@ func RegisterLoadBalancerServer(s grpc.ServiceRegistrar, srv LoadBalancerServer)
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&LoadBalancer_ServiceDesc, srv)
-}
-
-func _LoadBalancer_GetBestServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetBestServerRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(LoadBalancerServer).GetBestServer(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: LoadBalancer_GetBestServer_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(LoadBalancerServer).GetBestServer(ctx, req.(*GetBestServerRequest))
-	}
-	return interceptor(ctx, in, info, handler)
 }
 
 func _LoadBalancer_RegisterBackend_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -182,6 +158,24 @@ func _LoadBalancer_ReportLoad_Handler(srv interface{}, ctx context.Context, dec 
 	return interceptor(ctx, in, info, handler)
 }
 
+func _LoadBalancer_GetBestServer_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetBestServerRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(LoadBalancerServer).GetBestServer(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: LoadBalancer_GetBestServer_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(LoadBalancerServer).GetBestServer(ctx, req.(*GetBestServerRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // LoadBalancer_ServiceDesc is the grpc.ServiceDesc for LoadBalancer service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -190,16 +184,16 @@ var LoadBalancer_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*LoadBalancerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "GetBestServer",
-			Handler:    _LoadBalancer_GetBestServer_Handler,
-		},
-		{
 			MethodName: "RegisterBackend",
 			Handler:    _LoadBalancer_RegisterBackend_Handler,
 		},
 		{
 			MethodName: "ReportLoad",
 			Handler:    _LoadBalancer_ReportLoad_Handler,
+		},
+		{
+			MethodName: "GetBestServer",
+			Handler:    _LoadBalancer_GetBestServer_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

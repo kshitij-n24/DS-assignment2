@@ -21,6 +21,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+// OrderMessage defines a message carrying an order for a given round.
 type OrderMessage struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	SenderId      int32                  `protobuf:"varint,1,opt,name=sender_id,json=senderId,proto3" json:"sender_id,omitempty"` // ID of the sender
@@ -81,9 +82,10 @@ func (x *OrderMessage) GetOrder() string {
 	return ""
 }
 
+// Ack is a simple acknowledgement message.
 type Ack struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Received      bool                   `protobuf:"varint,1,opt,name=received,proto3" json:"received,omitempty"` // Simple acknowledgement
+	Received      bool                   `protobuf:"varint,1,opt,name=received,proto3" json:"received,omitempty"` // Acknowledgement flag
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

@@ -25,6 +25,8 @@ const (
 // ByzantineServiceClient is the client API for ByzantineService service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
+//
+// ByzantineService defines the RPC for propagating orders.
 type ByzantineServiceClient interface {
 	// PropagateOrder is called to send an order (or report) for a given round.
 	PropagateOrder(ctx context.Context, in *OrderMessage, opts ...grpc.CallOption) (*Ack, error)
@@ -51,6 +53,8 @@ func (c *byzantineServiceClient) PropagateOrder(ctx context.Context, in *OrderMe
 // ByzantineServiceServer is the server API for ByzantineService service.
 // All implementations must embed UnimplementedByzantineServiceServer
 // for forward compatibility.
+//
+// ByzantineService defines the RPC for propagating orders.
 type ByzantineServiceServer interface {
 	// PropagateOrder is called to send an order (or report) for a given round.
 	PropagateOrder(context.Context, *OrderMessage) (*Ack, error)

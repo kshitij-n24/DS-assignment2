@@ -26,7 +26,7 @@ const (
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 //
-// The computational service that performs a simple arithmetic task.
+// The computational service that performs an arithmetic or recursive computation.
 type ComputationalServiceClient interface {
 	// Performs a compute operation.
 	ComputeTask(ctx context.Context, in *ComputeTaskRequest, opts ...grpc.CallOption) (*ComputeTaskResponse, error)
@@ -54,7 +54,7 @@ func (c *computationalServiceClient) ComputeTask(ctx context.Context, in *Comput
 // All implementations must embed UnimplementedComputationalServiceServer
 // for forward compatibility.
 //
-// The computational service that performs a simple arithmetic task.
+// The computational service that performs an arithmetic or recursive computation.
 type ComputationalServiceServer interface {
 	// Performs a compute operation.
 	ComputeTask(context.Context, *ComputeTaskRequest) (*ComputeTaskResponse, error)

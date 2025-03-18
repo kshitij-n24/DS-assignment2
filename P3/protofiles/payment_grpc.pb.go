@@ -23,6 +23,7 @@ const (
 	PaymentGateway_Authenticate_FullMethodName   = "/payment.PaymentGateway/Authenticate"
 	PaymentGateway_GetBalance_FullMethodName     = "/payment.PaymentGateway/GetBalance"
 	PaymentGateway_ProcessPayment_FullMethodName = "/payment.PaymentGateway/ProcessPayment"
+	PaymentGateway_SearchAccounts_FullMethodName = "/payment.PaymentGateway/SearchAccounts"
 )
 
 // PaymentGatewayClient is the client API for PaymentGateway service.
@@ -35,6 +36,7 @@ type PaymentGatewayClient interface {
 	Authenticate(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	GetBalance(ctx context.Context, in *BalanceRequest, opts ...grpc.CallOption) (*BalanceResponse, error)
 	ProcessPayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
+	SearchAccounts(ctx context.Context, in *SearchAccountsRequest, opts ...grpc.CallOption) (*SearchAccountsResponse, error)
 }
 
 type paymentGatewayClient struct {
@@ -85,6 +87,16 @@ func (c *paymentGatewayClient) ProcessPayment(ctx context.Context, in *PaymentRe
 	return out, nil
 }
 
+func (c *paymentGatewayClient) SearchAccounts(ctx context.Context, in *SearchAccountsRequest, opts ...grpc.CallOption) (*SearchAccountsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SearchAccountsResponse)
+	err := c.cc.Invoke(ctx, PaymentGateway_SearchAccounts_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // PaymentGatewayServer is the server API for PaymentGateway service.
 // All implementations must embed UnimplementedPaymentGatewayServer
 // for forward compatibility.
@@ -95,6 +107,7 @@ type PaymentGatewayServer interface {
 	Authenticate(context.Context, *AuthRequest) (*AuthResponse, error)
 	GetBalance(context.Context, *BalanceRequest) (*BalanceResponse, error)
 	ProcessPayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
+	SearchAccounts(context.Context, *SearchAccountsRequest) (*SearchAccountsResponse, error)
 	mustEmbedUnimplementedPaymentGatewayServer()
 }
 
@@ -116,6 +129,9 @@ func (UnimplementedPaymentGatewayServer) GetBalance(context.Context, *BalanceReq
 }
 func (UnimplementedPaymentGatewayServer) ProcessPayment(context.Context, *PaymentRequest) (*PaymentResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method ProcessPayment not implemented")
+}
+func (UnimplementedPaymentGatewayServer) SearchAccounts(context.Context, *SearchAccountsRequest) (*SearchAccountsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SearchAccounts not implemented")
 }
 func (UnimplementedPaymentGatewayServer) mustEmbedUnimplementedPaymentGatewayServer() {}
 func (UnimplementedPaymentGatewayServer) testEmbeddedByValue()                        {}
@@ -210,6 +226,24 @@ func _PaymentGateway_ProcessPayment_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _PaymentGateway_SearchAccounts_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SearchAccountsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentGatewayServer).SearchAccounts(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentGateway_SearchAccounts_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentGatewayServer).SearchAccounts(ctx, req.(*SearchAccountsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // PaymentGateway_ServiceDesc is the grpc.ServiceDesc for PaymentGateway service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -232,6 +266,10 @@ var PaymentGateway_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "ProcessPayment",
 			Handler:    _PaymentGateway_ProcessPayment_Handler,
+		},
+		{
+			MethodName: "SearchAccounts",
+			Handler:    _PaymentGateway_SearchAccounts_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

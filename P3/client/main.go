@@ -5,10 +5,11 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
 	"io/ioutil"
 	"log"
-	"math/rand"
 	"os"
 	"strconv"
 	"strings"
@@ -31,21 +32,17 @@ var (
 	pgConn   *grpc.ClientConn
 	clientMu sync.Mutex
 
-	// currentToken holds the token of the last authenticated user.
 	currentToken string
 )
 
-func init() {
-	// Seed the random number generator for idempotency key generation.
-	rand.Seed(time.Now().UnixNano())
-}
-
-// generateIdempotencyKey creates a unique idempotency key.
 func generateIdempotencyKey() string {
-	return fmt.Sprintf("key-%d-%d", time.Now().UnixNano(), rand.Intn(10000))
+	b := make([]byte, 16)
+	if _, err := rand.Read(b); err != nil {
+		return fmt.Sprintf("key-%d", time.Now().UnixNano())
+	}
+	return hex.EncodeToString(b)
 }
 
-// connectPaymentGateway continuously attempts to establish a connection to the Payment Gateway.
 func connectPaymentGateway(creds credentials.TransportCredentials) {
 	for {
 		clientMu.Lock()
@@ -74,8 +71,11 @@ func connectPaymentGateway(creds credentials.TransportCredentials) {
 	}
 }
 
-// registerClient registers a new client with the Payment Gateway.
 func registerClient(username, password, bankAccount string, initialBalance float64) {
+	if strings.TrimSpace(username) == "" || strings.TrimSpace(password) == "" || strings.TrimSpace(bankAccount) == "" {
+		log.Println("[CLIENT] Username, password, and bank account must be non-empty.")
+		return
+	}
 	clientMu.Lock()
 	currentClient := pgClient
 	clientMu.Unlock()
@@ -83,7 +83,7 @@ func registerClient(username, password, bankAccount string, initialBalance float
 		log.Println("[CLIENT] Cannot register client: Payment Gateway offline")
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	req := &pb.RegisterClientRequest{
 		Username:       username,
@@ -106,8 +106,11 @@ func registerClient(username, password, bankAccount string, initialBalance float
 	}
 }
 
-// authenticate performs authentication with the Payment Gateway.
 func authenticate(username, password string) {
+	if strings.TrimSpace(username) == "" || strings.TrimSpace(password) == "" {
+		log.Println("[CLIENT] Username and password must be non-empty.")
+		return
+	}
 	clientMu.Lock()
 	currentClient := pgClient
 	clientMu.Unlock()
@@ -115,7 +118,7 @@ func authenticate(username, password string) {
 		log.Println("[CLIENT] Cannot authenticate: Payment Gateway offline")
 		return
 	}
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	resp, err := currentClient.Authenticate(ctx, &pb.AuthRequest{
 		Username: username,
@@ -132,7 +135,6 @@ func authenticate(username, password string) {
 	log.Printf("[CLIENT] Authentication successful. Token: %s", currentToken)
 }
 
-// getBalance fetches the balance for the currently authenticated user.
 func getBalance() {
 	if currentToken == "" {
 		log.Println("[CLIENT] Please authenticate first using the auth command.")
@@ -157,11 +159,41 @@ func getBalance() {
 	fmt.Printf("[CLIENT] Current Balance: %.2f (%s)\n", resp.Balance, resp.Message)
 }
 
-// processPayment sends a payment request to the Payment Gateway.
-// If no idempotency key is provided, it is generated automatically.
-func processPayment(toBank string, amount float64, providedKey string) {
-	if currentToken == "" {
-		log.Println("[CLIENT] Please authenticate first using the auth command.")
+func searchAccounts(query string) {
+	// Allow search even if not authenticated.
+	clientMu.Lock()
+	currentClient := pgClient
+	clientMu.Unlock()
+	if currentClient == nil {
+		log.Println("[CLIENT] Cannot search accounts: Payment Gateway offline")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	// Even if token is missing, SearchAccounts is allowed per our interceptor.
+	req := &pb.SearchAccountsRequest{Query: query}
+	resp, err := currentClient.SearchAccounts(ctx, req)
+	if err != nil {
+		log.Printf("[CLIENT] Search error: %v", err)
+		return
+	}
+	if len(resp.Accounts) == 0 {
+		fmt.Println("No accounts found.")
+		return
+	}
+	fmt.Println("Accounts found:")
+	for _, acc := range resp.Accounts {
+		fmt.Printf("Username: %s, BankAccount: %s, Balance: %.2f\n", acc.Username, acc.BankAccount, acc.Balance)
+	}
+}
+
+func processPayment(toBank, recipientAccount string, amount float64, providedKey string) {
+	if strings.TrimSpace(toBank) == "" || strings.TrimSpace(recipientAccount) == "" {
+		log.Println("[CLIENT] Bank and recipient account must be non-empty.")
+		return
+	}
+	if amount <= 0 {
+		fmt.Println("Invalid amount value. Must be a positive number.")
 		return
 	}
 	clientMu.Lock()
@@ -170,11 +202,11 @@ func processPayment(toBank string, amount float64, providedKey string) {
 	if currentClient == nil {
 		log.Printf("[CLIENT] Payment Gateway offline. Queuing payment.")
 		req := &pb.PaymentRequest{
-			Token:  currentToken,
-			ToBank: toBank,
-			Amount: amount,
+			Token:            currentToken,
+			ToBank:           toBank,
+			Amount:           amount,
+			RecipientAccount: recipientAccount,
 		}
-		// Auto-generate key if not provided.
 		if providedKey == "" {
 			req.IdempotencyKey = generateIdempotencyKey()
 		} else {
@@ -189,9 +221,10 @@ func processPayment(toBank string, amount float64, providedKey string) {
 	md := metadata.New(map[string]string{"authorization": currentToken})
 	ctx = metadata.NewOutgoingContext(ctx, md)
 	req := &pb.PaymentRequest{
-		Token:  currentToken,
-		ToBank: toBank,
-		Amount: amount,
+		Token:            currentToken,
+		ToBank:           toBank,
+		Amount:           amount,
+		RecipientAccount: recipientAccount,
 	}
 	if providedKey == "" {
 		req.IdempotencyKey = generateIdempotencyKey()
@@ -208,14 +241,12 @@ func processPayment(toBank string, amount float64, providedKey string) {
 		return
 	}
 	if !resp.Success {
-		log.Printf("[CLIENT] Payment processing failed: %s. Queuing payment.", resp.Message)
-		queuePayment(req)
+		log.Printf("[CLIENT] Payment processing failed: %s. Not queuing transaction.", resp.Message)
 		return
 	}
 	fmt.Printf("[CLIENT] Payment Response: %s\n", resp.Message)
 }
 
-// queuePayment adds a payment request to the offline queue.
 func queuePayment(req *pb.PaymentRequest) {
 	offlineQueue.Lock()
 	defer offlineQueue.Unlock()
@@ -229,7 +260,6 @@ func queuePayment(req *pb.PaymentRequest) {
 	log.Printf("[CLIENT] Queued payment with key %s for offline processing", req.IdempotencyKey)
 }
 
-// retryOfflinePayments periodically retries queued payments.
 func retryOfflinePayments(token string) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -249,8 +279,12 @@ func retryOfflinePayments(token string) {
 		log.Println("[CLIENT] Retrying offline queued payments...")
 		var remaining []*pb.PaymentRequest
 		for _, req := range offlineQueue.queue {
+			// Update token from global if available.
+			if currentToken != "" {
+				req.Token = currentToken
+			}
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-			md := metadata.New(map[string]string{"authorization": token})
+			md := metadata.New(map[string]string{"authorization": req.Token})
 			ctx = metadata.NewOutgoingContext(ctx, md)
 			resp, err := currentClient.ProcessPayment(ctx, req)
 			cancel()
@@ -266,14 +300,14 @@ func retryOfflinePayments(token string) {
 	}
 }
 
-// printHelp displays the list of available commands.
 func printHelp() {
 	helpText := `
 Available commands:
   register <username> <password> <bankAccount> <initialBalance>   Register a new client.
   auth <username> <password>                                       Authenticate and obtain a token.
   balance                                                          Get the current balance.
-  pay <to_bank> <amount> [idempotency_key]                           Make a payment (idempotency key is optional).
+  pay <to_bank> <recipient_account> <amount> [idempotency_key]       Make a payment (recipient account is required; idempotency key is optional).
+  search [query]                                                   List all accounts if query is omitted, or search accounts by username or bank account.
   help                                                             Display this help message.
   exit                                                             Exit the client.
 `
@@ -281,7 +315,6 @@ Available commands:
 }
 
 func main() {
-	// Load CA certificate.
 	caCertPath := "../certificates/ca.crt"
 	caCert, err := ioutil.ReadFile(caCertPath)
 	if err != nil {
@@ -295,21 +328,15 @@ func main() {
 		RootCAs: caCertPool,
 	})
 
-	// Start background goroutine to establish connection.
 	go connectPaymentGateway(creds)
-
-	// Start offline payment retry goroutine.
 	go retryOfflinePayments(currentToken)
 
-	// Read user commands from stdin.
-	scanner := bufio.NewScanner(os.Stdin)
+	time.Sleep(1 * time.Second)
 	fmt.Println("Interactive Payment Client")
 	printHelp()
-	for {
+	scanner := bufio.NewScanner(os.Stdin)
+	for scanner.Scan() {
 		fmt.Print("> ")
-		if !scanner.Scan() {
-			break
-		}
 		line := scanner.Text()
 		if len(strings.TrimSpace(line)) == 0 {
 			continue
@@ -327,9 +354,9 @@ func main() {
 				fmt.Println("Usage: register <username> <password> <bankAccount> <initialBalance>")
 				continue
 			}
-			initialBalance, err := strconv.ParseFloat(tokens[4], 64)
-			if err != nil {
-				fmt.Println("Invalid initialBalance value.")
+			initialBalance, err := strconv.ParseFloat(strings.TrimSpace(tokens[4]), 64)
+			if err != nil || initialBalance <= 0 {
+				fmt.Println("Invalid initialBalance value. Must be a positive number.")
 				continue
 			}
 			registerClient(tokens[1], tokens[2], tokens[3], initialBalance)
@@ -342,21 +369,27 @@ func main() {
 		case "balance":
 			getBalance()
 		case "pay":
-			// Support both: pay <to_bank> <amount> [idempotency_key]
-			if len(tokens) < 3 || len(tokens) > 4 {
-				fmt.Println("Usage: pay <to_bank> <amount> [idempotency_key]")
+			// Expected: pay <to_bank> <recipient_account> <amount> [idempotency_key]
+			if len(tokens) < 4 || len(tokens) > 5 {
+				fmt.Println("Usage: pay <to_bank> <recipient_account> <amount> [idempotency_key]")
 				continue
 			}
-			amount, err := strconv.ParseFloat(tokens[2], 64)
-			if err != nil {
-				fmt.Println("Invalid amount value.")
+			amount, err := strconv.ParseFloat(strings.TrimSpace(tokens[3]), 64)
+			if err != nil || amount <= 0 {
+				fmt.Println("Invalid amount value. Must be a positive number.")
 				continue
 			}
 			providedKey := ""
-			if len(tokens) == 4 {
-				providedKey = tokens[3]
+			if len(tokens) == 5 {
+				providedKey = tokens[4]
 			}
-			processPayment(tokens[1], amount, providedKey)
+			processPayment(tokens[1], tokens[2], amount, providedKey)
+		case "search":
+			query := ""
+			if len(tokens) > 1 {
+				query = strings.Join(tokens[1:], " ")
+			}
+			searchAccounts(query)
 		default:
 			fmt.Println("Unknown command. Type 'help' for available commands.")
 		}

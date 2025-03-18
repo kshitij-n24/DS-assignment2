@@ -9,14 +9,13 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
 	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
 	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/codes"
-	"google.golang.org/grpc/status"
 )
 
 // computationalServer implements the ComputationalService.
@@ -24,16 +23,8 @@ type computationalServer struct {
 	pb.UnimplementedComputationalServiceServer
 }
 
-// hanoi recursively computes the number of moves needed to solve Tower of Hanoi for n disks.
-func hanoi(n int) int {
-	if n == 1 {
-		return 1
-	}
-	return 2*hanoi(n-1) + 1
-}
-
-// ComputeTask performs the compute operation. Supported operations are "add", "multiply", and "hanoi".
-// For "hanoi", field A is used as the number of disks (must be between 1 and 25); field B is ignored.
+// ComputeTask performs a compute operation. Supported operations: "add", "multiply", and "loop".
+// For "loop", parameter A is used as a multiplier for a high iteration count.
 func (s *computationalServer) ComputeTask(ctx context.Context, req *pb.ComputeTaskRequest) (*pb.ComputeTaskResponse, error) {
 	var result int64
 	switch req.Operation {
@@ -41,26 +32,28 @@ func (s *computationalServer) ComputeTask(ctx context.Context, req *pb.ComputeTa
 		result = int64(req.A) + int64(req.B)
 	case "multiply":
 		result = int64(req.A) * int64(req.B)
-	case "hanoi":
+	case "loop":
 		n := int(req.A)
 		if n < 1 {
-			return nil, status.Error(codes.InvalidArgument, "number of disks must be at least 1")
+			return nil, fmt.Errorf("parameter 'a' must be at least 1")
 		}
-		if n > 25 {
-			return nil, status.Error(codes.InvalidArgument, "too many disks, maximum allowed is 25")
+		iterations := n * 10000000 // High iteration count
+		var sum int64 = 0
+		for i := 0; i < iterations; i++ {
+			sum += int64(i % 100)
 		}
-		result = int64(hanoi(n))
+		result = sum % 1000000
 	default:
-		return nil, status.Error(codes.InvalidArgument, "unsupported operation")
+		return nil, fmt.Errorf("unsupported operation")
 	}
 
-	// Simulate a computational delay.
+	// Simulate computation delay.
 	time.Sleep(500 * time.Millisecond)
 	log.Printf("Computed %s on %d and %d: %d", req.Operation, req.A, req.B, result)
 	return &pb.ComputeTaskResponse{Result: int32(result)}, nil
 }
 
-// registerWithLB repeatedly registers this backend server with the LB server.
+// registerWithLB repeatedly registers this backend with the LB server.
 func registerWithLB(lbAddress, backendAddress string) {
 	for {
 		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
@@ -85,7 +78,7 @@ func registerWithLB(lbAddress, backendAddress string) {
 	}
 }
 
-// reportLoadPeriodically simulates load reporting to the LB server.
+// reportLoadPeriodically reports a simulated load to the LB server every 5 seconds.
 func reportLoadPeriodically(lbAddress, backendAddress string) {
 	for {
 		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
@@ -95,10 +88,13 @@ func reportLoadPeriodically(lbAddress, backendAddress string) {
 			continue
 		}
 		client := lbpb.NewLoadBalancerClient(conn)
-		// Simulate a load value (some may exceed [0,100] to test clamping).
+		// Simulate a load value between 0 and 120.
 		load := int32(rand.Intn(120))
 		ctx, cancel := context.WithTimeout(context.Background(), time.Second)
-		_, err = client.ReportLoad(ctx, &lbpb.ReportLoadRequest{ServerAddress: backendAddress, Load: load})
+		_, err = client.ReportLoad(ctx, &lbpb.ReportLoadRequest{
+			ServerAddress: backendAddress,
+			Load:          load,
+		})
 		cancel()
 		conn.Close()
 		if err != nil {

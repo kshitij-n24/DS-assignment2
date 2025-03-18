@@ -40,7 +40,7 @@ func (bs *BankServer) PrepareTransaction(ctx context.Context, req *pb.BankTransa
 		log.Printf("[%s] Duplicate prepare for transaction %s", bs.name, req.TransactionId)
 	}
 	bs.preparedTransactions[req.TransactionId] = req.Amount
-	log.Printf("[%s] Prepared transaction %s for amount %.2f", bs.name, req.TransactionId, req.Amount)
+	log.Printf("[%s] Prepared transaction %s for amount %.2f, recipient: %s", bs.name, req.TransactionId, req.Amount, req.RecipientAccount)
 	return &pb.BankTransactionResponse{
 		Success: true,
 		Message: fmt.Sprintf("Transaction prepared at %s", bs.name),
@@ -61,7 +61,7 @@ func (bs *BankServer) CommitTransaction(ctx context.Context, req *pb.BankTransac
 			Message: "Transaction not found for commit",
 		}, nil
 	}
-	log.Printf("[%s] Committed transaction %s for amount %.2f", bs.name, req.TransactionId, amount)
+	log.Printf("[%s] Committed transaction %s for amount %.2f, recipient: %s", bs.name, req.TransactionId, amount, req.RecipientAccount)
 	return &pb.BankTransactionResponse{
 		Success: true,
 		Message: fmt.Sprintf("Transaction committed at %s", bs.name),
@@ -99,7 +99,6 @@ func main() {
 	port := flag.String("port", "50051", "Port for the bank server to listen on")
 	flag.Parse()
 
-	// Set up file logging.
 	logDir := "../logs"
 	if _, err := os.Stat(logDir); os.IsNotExist(err) {
 		if err := os.MkdirAll(logDir, 0755); err != nil {
