@@ -65,6 +65,7 @@ func NewPaymentGatewayServer(dataFile string, bankTimeout time.Duration) *Paymen
 }
 
 // loadData loads persistent data from the JSON file.
+// If any of the maps are nil, they are reinitialized.
 func (s *PaymentGatewayServer) loadData() {
   s.mu.Lock()
   defer s.mu.Unlock()
@@ -78,9 +79,18 @@ func (s *PaymentGatewayServer) loadData() {
     log.Printf("[PERSISTENCE] Error unmarshaling data: %v", err)
     return
   }
+  if pgData.UserBalances == nil {
+    pgData.UserBalances = make(map[string]float64)
+  }
+  if pgData.UserCreds == nil {
+    pgData.UserCreds = make(map[string]string)
+  }
+  if pgData.ProcessedTransactions == nil {
+    pgData.ProcessedTransactions = make(map[string]*pb.PaymentResponse)
+  }
   s.userBalances = pgData.UserBalances
-  s.processedTransactions = pgData.ProcessedTransactions
   s.userCreds = pgData.UserCreds
+  s.processedTransactions = pgData.ProcessedTransactions
   log.Printf("[PERSISTENCE] Data loaded successfully")
 }
 
@@ -248,13 +258,11 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
   for i := 0; i < 2; i++ {
     res := <-resultCh
     if res.err != nil || !res.resp.Success {
-      // Abort both banks.
       log.Printf("[2PC] Commit phase failed for transaction %s: %v", transactionID, res.err)
       senderBank.AbortTransaction(context.Background(), prepareReq)
       receiverBank.AbortTransaction(context.Background(), prepareReq)
       return &pb.PaymentResponse{Success: false, Message: "Bank commit failed"}, nil
     }
-    // Determine which bank committed.
     if senderCommit == nil {
       senderCommit = res.resp
     } else {
@@ -262,7 +270,9 @@ func (s *PaymentGatewayServer) ProcessPayment(ctx context.Context, req *pb.Payme
     }
   }
 
-  log.Printf("[2PC] Both banks committed transaction %s", transactionID)
+  log.Printf("[2PC] Both banks committed transaction %s: Sender: %s; Receiver: %s",
+    transactionID, senderCommit.Message, receiverCommit.Message)
+
   s.mu.Lock()
   s.userBalances[username] -= req.Amount
   s.mu.Unlock()
@@ -315,7 +325,6 @@ func authInterceptor(
   if len(tokens) == 0 || tokens[0] == "" {
     return nil, fmt.Errorf("Missing authorization token")
   }
-  // Optionally, token format validation can be added here.
   return handler(ctx, req)
 }
 
@@ -378,11 +387,12 @@ func main() {
     ServerName: "localhost",
   })
 
-  // Connect to bank servers.
+  // Connect to bank servers and store the connections for later shutdown.
   bankConnections := map[string]string{
     "BankA": "localhost:50051",
     "BankB": "localhost:50052",
   }
+  var bankConns []*grpc.ClientConn
   for bank, addr := range bankConnections {
     conn, err := grpc.Dial(addr, grpc.WithTransportCredentials(clientCreds))
     if err != nil {
@@ -390,6 +400,7 @@ func main() {
       continue
     }
     pgServer.bankConns[bank] = pb.NewBankServiceClient(conn)
+    bankConns = append(bankConns, conn)
     log.Printf("[BANK-CONNECT] Connected to bank %s at %s", bank, addr)
   }
 
@@ -401,11 +412,16 @@ func main() {
   }
   log.Println("[STARTUP] Payment Gateway server is listening on :50060")
 
+  // Handle shutdown gracefully.
   go func() {
     ch := make(chan os.Signal, 1)
     signal.Notify(ch, os.Interrupt, syscall.SIGTERM)
     <-ch
     log.Println("[SHUTDOWN] Shutting down Payment Gateway server...")
+    // Close all bank connections.
+    for _, conn := range bankConns {
+      conn.Close()
+    }
     grpcServer.GracefulStop()
     os.Exit(0)
   }()

@@ -12,7 +12,7 @@ import (
 	"syscall"
 	"time"
 
-	pb "github.com/<user>/DS-assignment2/P1/protofiles/lb"
+	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
 	"go.etcd.io/etcd/client/v3"
 	"google.golang.org/grpc"
 )

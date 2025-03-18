@@ -1,0 +1,1 @@
+2025/03/18 19:51:14 [STARTUP] Failed to load TLS credentials from ../certificates/server.crt and ../certificates/server.key: open ../certificates/server.crt: no such file or directory

@@ -19,6 +19,7 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
+	PaymentGateway_RegisterClient_FullMethodName = "/payment.PaymentGateway/RegisterClient"
 	PaymentGateway_Authenticate_FullMethodName   = "/payment.PaymentGateway/Authenticate"
 	PaymentGateway_GetBalance_FullMethodName     = "/payment.PaymentGateway/GetBalance"
 	PaymentGateway_ProcessPayment_FullMethodName = "/payment.PaymentGateway/ProcessPayment"
@@ -30,6 +31,7 @@ const (
 //
 // The Payment Gateway service.
 type PaymentGatewayClient interface {
+	RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error)
 	Authenticate(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error)
 	GetBalance(ctx context.Context, in *BalanceRequest, opts ...grpc.CallOption) (*BalanceResponse, error)
 	ProcessPayment(ctx context.Context, in *PaymentRequest, opts ...grpc.CallOption) (*PaymentResponse, error)
@@ -41,6 +43,16 @@ type paymentGatewayClient struct {
 
 func NewPaymentGatewayClient(cc grpc.ClientConnInterface) PaymentGatewayClient {
 	return &paymentGatewayClient{cc}
+}
+
+func (c *paymentGatewayClient) RegisterClient(ctx context.Context, in *RegisterClientRequest, opts ...grpc.CallOption) (*RegisterClientResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(RegisterClientResponse)
+	err := c.cc.Invoke(ctx, PaymentGateway_RegisterClient_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *paymentGatewayClient) Authenticate(ctx context.Context, in *AuthRequest, opts ...grpc.CallOption) (*AuthResponse, error) {
@@ -79,6 +91,7 @@ func (c *paymentGatewayClient) ProcessPayment(ctx context.Context, in *PaymentRe
 //
 // The Payment Gateway service.
 type PaymentGatewayServer interface {
+	RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error)
 	Authenticate(context.Context, *AuthRequest) (*AuthResponse, error)
 	GetBalance(context.Context, *BalanceRequest) (*BalanceResponse, error)
 	ProcessPayment(context.Context, *PaymentRequest) (*PaymentResponse, error)
@@ -92,6 +105,9 @@ type PaymentGatewayServer interface {
 // pointer dereference when methods are called.
 type UnimplementedPaymentGatewayServer struct{}
 
+func (UnimplementedPaymentGatewayServer) RegisterClient(context.Context, *RegisterClientRequest) (*RegisterClientResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method RegisterClient not implemented")
+}
 func (UnimplementedPaymentGatewayServer) Authenticate(context.Context, *AuthRequest) (*AuthResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Authenticate not implemented")
 }
@@ -120,6 +136,24 @@ func RegisterPaymentGatewayServer(s grpc.ServiceRegistrar, srv PaymentGatewaySer
 		t.testEmbeddedByValue()
 	}
 	s.RegisterService(&PaymentGateway_ServiceDesc, srv)
+}
+
+func _PaymentGateway_RegisterClient_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(RegisterClientRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(PaymentGatewayServer).RegisterClient(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: PaymentGateway_RegisterClient_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(PaymentGatewayServer).RegisterClient(ctx, req.(*RegisterClientRequest))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _PaymentGateway_Authenticate_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -183,6 +217,10 @@ var PaymentGateway_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "payment.PaymentGateway",
 	HandlerType: (*PaymentGatewayServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "RegisterClient",
+			Handler:    _PaymentGateway_RegisterClient_Handler,
+		},
 		{
 			MethodName: "Authenticate",
 			Handler:    _PaymentGateway_Authenticate_Handler,

@@ -7,8 +7,8 @@ import (
 	"log"
 	"time"
 
-	backendpb "github.com/<user>/DS-assignment2/P1/protofiles/backend"
-	lbpb "github.com/<user>/DS-assignment2/P1/protofiles/lb"
+	backendpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
+	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
 
 	"google.golang.org/grpc"
 )

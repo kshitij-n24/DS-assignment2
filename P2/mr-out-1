@@ -1,312 +1,291 @@
-by 3
-before 4
-things 2
-everything 1
-thanks 1
-tears 1
-ask 1
-fields 1
-archives 1
-forged 1
-curiosity 1
-solid 1
-place 3
-gate 1
-shuffle 1
-dizziness 1
-towering 1
-could 7
-once 3
-he 32
-pushed 2
-protest 1
-reversing 1
-erupted 1
-softly 1
-hit 1
-newly 1
-home 1
-overgrown 1
-cracked 1
-middle 1
-horizon 1
-stepped 4
-different 1
-“a 1
-great 1
-creeping 1
-bookshelves 1
-whole 1
-alone 2
-guardian 1
-hollow 2
-leave 1
-either 1
-watching 1
-people 4
-ago 1
-daniel 12
-saw 3
-minutes 1
-candlelight 4
-along 1
-upstairs 1
-light.” 1
-see?” 1
-daniel’s 2
-do 2
-for 8
-remember 1
-whispered 4
-always 3
-suspended 1
-ruins 1
-way 1
-hand 2
-merchants 1
-pointed 1
-glow 1
-protesting 1
-face 3
-understand.” 1
-buried 1
-levers 1
-“do 2
-casting 1
-herself 1
-belong 1
-spine 1
-leave?” 1
-of 32
-tower 9
-where 3
-stairwell 1
-known 1
-become 1
-mother’s 1
-“but… 1
-shadows 1
-move 1
-bustled 1
-through 4
-an 2
-walls 5
-moved 2
-held 1
-preferred 1
-dust-filled 1
-tangled 2
-waiting 2
-like 6
-itself 2
-white 1
-house.” 1
-stumbling 1
-stopped 3
-finally 3
-creaked 1
-forward 2
-shone 1
-returned 2
-end 5
-gestured 1
-silent 4
-gone 2
-within 1
-around 3
-possible 1
-deeper 1
-than 2
-unknowingly 1
-up 2
-ahead 1
-settled 1
-listening 1
-gave 1
-lives—farmers 1
-had 18
-living 1
-third 1
-seen 1
-echoes 1
-slow 1
-hesitated 3
-beneath 1
-raced 1
-chimes 1
-gust 1
-name—elias 1
-outside 1
-children 1
-knew 1
-small 4
-gripped 1
-wave 1
-old 5
-but 14
-darkness 1
-room 4
-sight 1
-windows 2
-can.” 1
-“i 3
-each 1
-a 50
-no 1
-broken 1
-brighter 1
-having 1
-across 2
-staircase 1
-more 4
-and 30
-top 1
-placed 1
-moved—one 1
-shifted 2
-evermere 2
-to 18
-flickered 4
-which 1
-or 1
-clothes—a 1
-frowned 3
-garden 1
-subjects 1
-book 1
-keep 1
-“that’s 1
-trembled 1
-made 1
-clicked 1
-age 2
-“you’re 1
-left 1
-understand,” 1
-told 1
-something—or 1
-clung 1
-paintings 1
-service 1
-anymore 1
-ghost 3
-passing 2
-counting 1
-narrow 1
-widening 1
-were 5
-street 1
-sound 1
-doors 1
-real.” 1
-below 2
-rushed 2
-ticking 2
-against 1
-out.” 1
-it 32
-said 5
-entrance—a 1
-swallowing 1
-about 1
-memory 1
-the 138
-find 1
-surface 1
-victorian 1
-“in 1
-free.” 1
-looking 1
-then 8
-reach 1
-sudden 1
-back 2
-roared 1
-her 24
-next 2
-look 1
-stolen 1
-perfect 1
-view 1
-laugh 1
-“for 1
-all 1
-old-fashioned 2
-adjusting 1
-desk 3
-dripping 1
-normal 1
-daily 1
-curses 1
-backward 2
-bookshelf 1
-then—she 1
-thought 2
-supposed 2
-disuse 1
-ago… 1
-did 1
-stared 1
-stood 5
-key 1
-mechanism 1
-empty 2
-mysteries 1
-walking 1
-chair 1
-be 4
-go.” 1
-structure 2
-stories 2
-circular 1
-side 1
-learned 1
-at 20
-others 3
-least 2
-“you 2
-you’re 2
-both 1
-that 11
-calm 1
-skin 1
-you 11
-decades 2
-would 1
-should 1
-sure 1
-in 36
-full 1
-answers 2
-ascended 1
-rusted 2
-warm 2
-here,” 1
-ran 1
-i 5
-knowing 1
-must 1
-haunted 1
-someone—was 1
-front 1
-skeleton 1
-was 36
-company 1
-silence 2
-watch 6
-seemed 1
-another 2
-untouched 2
-reflection 1
-entered 1
-not 3
-“the 1
-every 1
-“neither 1
-let 1
-time 16
-if 9
-on 1
-yellowed 1
-questions 1
-nothing 1
+it [input1.txt input2.txt]
+i [input1.txt input2.txt]
+learned [input2.txt]
+left [input2.txt]
+memories [input2.txt]
+sudden [input2.txt]
+deeper [input2.txt]
+structure [input1.txt input2.txt]
+front [input2.txt]
+side [input2.txt]
+middle [input1.txt]
+living [input1.txt]
+frowned [input1.txt input2.txt]
+silent [input1.txt input2.txt]
+erupted [input1.txt]
+across [input2.txt]
+herself [input2.txt]
+overgrown [input2.txt]
+book [input2.txt]
+shifted [input2.txt]
+had [input1.txt input2.txt]
+way [input1.txt input2.txt]
+widening [input1.txt]
+doors [input2.txt]
+the [input1.txt input2.txt]
+everything [input1.txt]
+minutes [input1.txt]
+along [input2.txt]
+counting [input2.txt]
+through [input1.txt]
+by [input1.txt input2.txt]
+dripping [input2.txt]
+walls [input1.txt input2.txt]
+thanks [input1.txt]
+creaked [input2.txt]
+daniel [input1.txt]
+anymore [input1.txt]
+adjusting [input1.txt]
+circular [input1.txt]
+keep [input2.txt]
+stood [input1.txt input2.txt]
+at [input1.txt input2.txt]
+hesitated [input1.txt input2.txt]
+let [input2.txt]
+lives [input1.txt]
+stopped [input1.txt input2.txt]
+company [input1.txt]
+stared [input2.txt]
+daily [input1.txt]
+were [input1.txt input2.txt]
+or [input2.txt]
+curiosity [input2.txt]
+gave [input2.txt]
+solid [input2.txt]
+dizziness [input2.txt]
+outside [input2.txt]
+place [input1.txt input2.txt]
+view [input2.txt]
+reach [input2.txt]
+but [input1.txt input2.txt]
+ruins [input1.txt]
+echoes [input1.txt]
+whispered [input1.txt input2.txt]
+service [input1.txt]
+pointed [input1.txt]
+reversing [input1.txt]
+told [input2.txt]
+didn [input2.txt input1.txt]
+protest [input1.txt]
+do [input1.txt input2.txt]
+stairwell [input1.txt]
+waiting [input1.txt input2.txt]
+clung [input2.txt]
+subjects [input2.txt]
+full [input1.txt]
+glow [input2.txt]
+listening [input2.txt]
+could [input2.txt input1.txt]
+gust [input1.txt]
+must [input1.txt]
+guardian [input2.txt]
+casting [input2.txt]
+merchants [input1.txt]
+things [input1.txt input2.txt]
+home [input2.txt]
+settled [input2.txt]
+which [input1.txt]
+having [input2.txt]
+seen [input2.txt]
+desk [input2.txt]
+where [input1.txt input2.txt]
+for [input1.txt input2.txt]
+every [input1.txt]
+mysteries [input1.txt]
+stepped [input1.txt input2.txt]
+knowing [input1.txt]
+tears [input2.txt]
+face [input2.txt]
+questions [input2.txt]
+cracked [input2.txt]
+decades [input1.txt]
+room [input1.txt input2.txt]
+fashioned [input1.txt input2.txt]
+staircase [input2.txt]
+on [input2.txt]
+re [input2.txt]
+skeleton [input2.txt]
+tangled [input1.txt input2.txt]
+like [input1.txt input2.txt]
+newly [input1.txt]
+end [input2.txt]
+candlelight [input2.txt]
+curses [input1.txt]
+passing [input2.txt]
+nothing [input2.txt]
+see [input2.txt]
+tower [input1.txt]
+towering [input2.txt]
+creeping [input2.txt]
+name [input2.txt]
+great [input1.txt]
+ghost [input2.txt]
+hollow [input2.txt]
+calm [input2.txt]
+spine [input2.txt]
+levers [input1.txt]
+upstairs [input2.txt]
+each [input2.txt]
+about [input2.txt]
+stumbling [input2.txt]
+horizon [input1.txt]
+would [input1.txt]
+shouldn [input1.txt]
+rusted [input2.txt]
+ran [input2.txt]
+that [input1.txt input2.txt]
+against [input2.txt]
+entered [input2.txt]
+silence [input1.txt]
+watch [input1.txt]
+clean [input1.txt]
+victorian [input2.txt]
+shadows [input2.txt]
+memory [input2.txt]
+and [input1.txt input2.txt]
+always [input1.txt input2.txt]
+buried [input1.txt]
+warm [input2.txt]
+disuse [input2.txt]
+answers [input1.txt]
+back [input1.txt]
+forward [input1.txt]
+forged [input1.txt]
+de [input2.txt]
+returned [input2.txt]
+leave [input2.txt]
+remember [input1.txt input2.txt]
+archives [input1.txt]
+alone [input1.txt input2.txt]
+her [input2.txt]
+shuffle [input2.txt]
+beneath [input2.txt]
+belong [input2.txt]
+looking [input2.txt]
+small [input1.txt input2.txt]
+gate [input2.txt]
+raced [input2.txt]
+held [input2.txt]
+bustled [input1.txt]
+in [input1.txt input2.txt]
+mechanism [input1.txt]
+thought [input2.txt]
+children [input1.txt]
+sight [input1.txt]
+be [input1.txt input2.txt]
+clicked [input1.txt]
+known [input1.txt]
+look [input2.txt]
+move [input1.txt]
+no [input1.txt]
+then [input1.txt input2.txt]
+windows [input2.txt]
+did [input2.txt]
+narrow [input1.txt]
+you [input2.txt input1.txt]
+ahead [input2.txt]
+stories [input1.txt input2.txt]
+supposed [input2.txt]
+watching [input2.txt]
+neither [input2.txt]
+third [input2.txt]
+garden [input2.txt]
+bookshelf [input2.txt]
+white [input2.txt]
+than [input1.txt input2.txt]
+protesting [input2.txt]
+find [input1.txt]
+evermere [input1.txt]
+chimes [input1.txt]
+surface [input1.txt]
+haunted [input2.txt]
+around [input2.txt]
+once [input1.txt input2.txt]
+an [input1.txt]
+bookshelves [input2.txt]
+of [input1.txt input2.txt]
+suspended [input1.txt]
+unknowingly [input1.txt]
+empty [input2.txt]
+ask [input2.txt]
+saw [input1.txt input2.txt]
+wasn [input1.txt input2.txt]
+key [input1.txt]
+itself [input1.txt]
+sound [input2.txt]
+swallowing [input2.txt]
+normal [input2.txt]
+broken [input1.txt]
+ticking [input1.txt]
+made [input1.txt]
+yellowed [input2.txt]
+hit [input2.txt]
+sure [input2.txt]
+both [input1.txt]
+said [input1.txt input2.txt]
+top [input1.txt]
+sac [input2.txt]
+more [input2.txt]
+don [input2.txt]
+old [input1.txt input2.txt]
+time [input1.txt input2.txt]
+ascended [input1.txt]
+perfect [input2.txt]
+should [input2.txt]
+skin [input2.txt]
+seemed [input1.txt]
+he [input2.txt input1.txt]
+rushed [input1.txt]
+stolen [input1.txt]
+shone [input1.txt]
+hand [input1.txt input2.txt]
+walking [input2.txt]
+softly [input2.txt]
+gestured [input1.txt]
+brighter [input1.txt]
+people [input1.txt input2.txt]
+roared [input1.txt]
+trembled [input1.txt]
+paintings [input2.txt]
+laugh [input2.txt]
+slow [input1.txt]
+another [input1.txt]
+others [input1.txt input2.txt]
+placed [input1.txt]
+reflection [input2.txt]
+ago [input1.txt input2.txt]
+darkness [input1.txt]
+if [input1.txt input2.txt]
+moved [input1.txt input2.txt]
+next [input2.txt]
+not [input2.txt]
+gripped [input2.txt]
+either [input2.txt]
+all [input1.txt]
+knew [input1.txt]
+flickered [input1.txt input2.txt]
+s [input1.txt input2.txt]
+different [input2.txt input1.txt]
+street [input2.txt]
+within [input2.txt]
+possible [input2.txt]
+to [input1.txt input2.txt]
+fields [input1.txt]
+was [input1.txt input2.txt]
+pushed [input1.txt input2.txt]
+before [input1.txt input2.txt]
+finally [input1.txt input2.txt]
+wave [input2.txt]
+untouched [input1.txt input2.txt]
+backward [input1.txt input2.txt]
+preferred [input1.txt]
+below [input1.txt]
+become [input1.txt]
+mother [input2.txt]
+chair [input2.txt]
+a [input1.txt input2.txt]
+gone [input1.txt input2.txt]
+least [input2.txt]
+up [input2.txt]
+age [input2.txt]
+whole [input2.txt]

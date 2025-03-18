@@ -15,7 +15,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 
-	pb "github.com/<user>/DS-assignment2/P3/protofiles"
+	pb "github.com/kshitij-n24/DS-assignment2/P3/protofiles"
 )
 
 type BankServer struct {

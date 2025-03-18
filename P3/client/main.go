@@ -1,12 +1,17 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"crypto/tls"
 	"crypto/x509"
 	"fmt"
 	"io/ioutil"
 	"log"
+	"math/rand"
+	"os"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -14,7 +19,7 @@ import (
 	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/metadata"
 
-	pb "github.com/<user>/DS-assignment2/P3/protofiles"
+	pb "github.com/kshitij-n24/DS-assignment2/P3/protofiles"
 )
 
 var (
@@ -25,13 +30,25 @@ var (
 	pgClient pb.PaymentGatewayClient
 	pgConn   *grpc.ClientConn
 	clientMu sync.Mutex
+
+	// currentToken holds the token of the last authenticated user.
+	currentToken string
 )
+
+func init() {
+	// Seed the random number generator for idempotency key generation.
+	rand.Seed(time.Now().UnixNano())
+}
+
+// generateIdempotencyKey creates a unique idempotency key.
+func generateIdempotencyKey() string {
+	return fmt.Sprintf("key-%d-%d", time.Now().UnixNano(), rand.Intn(10000))
+}
 
 // connectPaymentGateway continuously attempts to establish a connection to the Payment Gateway.
 func connectPaymentGateway(creds credentials.TransportCredentials) {
 	for {
 		clientMu.Lock()
-		// If we already have a valid client, no need to reconnect.
 		if pgClient != nil {
 			clientMu.Unlock()
 			time.Sleep(10 * time.Second)
@@ -77,6 +94,9 @@ func registerClient(username, password, bankAccount string, initialBalance float
 	resp, err := currentClient.RegisterClient(ctx, req)
 	if err != nil {
 		log.Printf("[CLIENT] Registration error for user %s: %v", username, err)
+		clientMu.Lock()
+		pgClient = nil
+		clientMu.Unlock()
 		return
 	}
 	if !resp.Success {
@@ -86,106 +106,101 @@ func registerClient(username, password, bankAccount string, initialBalance float
 	}
 }
 
-func main() {
-	// Load CA certificate.
-	caCertPath := "../certificates/ca.crt"
-	caCert, err := ioutil.ReadFile(caCertPath)
-	if err != nil {
-		log.Fatalf("[CLIENT] Could not read CA certificate from %s: %v", caCertPath, err)
-	}
-	caCertPool := x509.NewCertPool()
-	if !caCertPool.AppendCertsFromPEM(caCert) {
-		log.Fatalf("[CLIENT] Failed to append CA certificate")
-	}
-	creds := credentials.NewTLS(&tls.Config{
-		RootCAs: caCertPool,
-	})
-
-	// Start background goroutine to establish connection.
-	go connectPaymentGateway(creds)
-
-	// Wait for connection establishment.
-	time.Sleep(5 * time.Second)
-
-	// Optionally register a new client (e.g., "charlie").
-	registerClient("charlie", "password3", "BankA", 300.0)
-
-	// Authenticate existing client "alice".
-	var token string
-	clientMu.Lock()
-	currentClient := pgClient
-	clientMu.Unlock()
-	if currentClient != nil {
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		authResp, err := currentClient.Authenticate(ctx, &pb.AuthRequest{
-			Username: "alice",
-			Password: "password1",
-		})
-		cancel()
-		if err != nil || !authResp.Success {
-			log.Printf("[CLIENT] Authentication failed: %v", err)
-			token = "alice-token" // Fallback token.
-		} else {
-			token = authResp.Token
-		}
-	} else {
-		log.Println("[CLIENT] Payment Gateway offline at startup. Using fallback token 'alice-token'")
-		token = "alice-token"
-	}
-	fmt.Printf("[CLIENT] Using token: %s\n", token)
-
-	// Build outgoing context with token.
-	baseCtx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	md := metadata.New(map[string]string{"authorization": token})
-	ctxWithMD := metadata.NewOutgoingContext(baseCtx, md)
-
-	// Attempt to get balance if connected.
-	clientMu.Lock()
-	currentClient = pgClient
-	clientMu.Unlock()
-	if currentClient != nil {
-		balResp, err := currentClient.GetBalance(ctxWithMD, &pb.BalanceRequest{Token: token})
-		if err != nil {
-			log.Printf("[CLIENT] Error fetching balance: %v", err)
-		} else {
-			fmt.Printf("[CLIENT] Current Balance: %.2f (%s)\n", balResp.Balance, balResp.Message)
-		}
-	} else {
-		fmt.Println("[CLIENT] Cannot fetch balance: Payment Gateway offline")
-	}
-
-	// Create a payment request.
-	paymentKey := "unique-payment-key-123"
-	paymentReq := &pb.PaymentRequest{
-		Token:          token,
-		ToBank:         "BankB", // Using BankB for this payment.
-		Amount:         100.0,
-		IdempotencyKey: paymentKey,
-	}
-
-	// Process the payment; if it fails, it will be queued.
-	processPayment(ctxWithMD, paymentReq)
-
-	// Start a background goroutine to retry queued payments.
-	go retryOfflinePayments(token)
-
-	// Block forever.
-	select {}
-}
-
-func processPayment(ctx context.Context, req *pb.PaymentRequest) {
+// authenticate performs authentication with the Payment Gateway.
+func authenticate(username, password string) {
 	clientMu.Lock()
 	currentClient := pgClient
 	clientMu.Unlock()
 	if currentClient == nil {
-		log.Printf("[CLIENT] Payment Gateway offline. Queuing payment with key %s.", req.IdempotencyKey)
+		log.Println("[CLIENT] Cannot authenticate: Payment Gateway offline")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	resp, err := currentClient.Authenticate(ctx, &pb.AuthRequest{
+		Username: username,
+		Password: password,
+	})
+	if err != nil || !resp.Success {
+		log.Printf("[CLIENT] Authentication failed for user %s: %v", username, err)
+		clientMu.Lock()
+		pgClient = nil
+		clientMu.Unlock()
+		return
+	}
+	currentToken = resp.Token
+	log.Printf("[CLIENT] Authentication successful. Token: %s", currentToken)
+}
+
+// getBalance fetches the balance for the currently authenticated user.
+func getBalance() {
+	if currentToken == "" {
+		log.Println("[CLIENT] Please authenticate first using the auth command.")
+		return
+	}
+	clientMu.Lock()
+	currentClient := pgClient
+	clientMu.Unlock()
+	if currentClient == nil {
+		log.Println("[CLIENT] Cannot fetch balance: Payment Gateway offline")
+		return
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	md := metadata.New(map[string]string{"authorization": currentToken})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	resp, err := currentClient.GetBalance(ctx, &pb.BalanceRequest{Token: currentToken})
+	if err != nil {
+		log.Printf("[CLIENT] Error fetching balance: %v", err)
+		return
+	}
+	fmt.Printf("[CLIENT] Current Balance: %.2f (%s)\n", resp.Balance, resp.Message)
+}
+
+// processPayment sends a payment request to the Payment Gateway.
+// If no idempotency key is provided, it is generated automatically.
+func processPayment(toBank string, amount float64, providedKey string) {
+	if currentToken == "" {
+		log.Println("[CLIENT] Please authenticate first using the auth command.")
+		return
+	}
+	clientMu.Lock()
+	currentClient := pgClient
+	clientMu.Unlock()
+	if currentClient == nil {
+		log.Printf("[CLIENT] Payment Gateway offline. Queuing payment.")
+		req := &pb.PaymentRequest{
+			Token:  currentToken,
+			ToBank: toBank,
+			Amount: amount,
+		}
+		// Auto-generate key if not provided.
+		if providedKey == "" {
+			req.IdempotencyKey = generateIdempotencyKey()
+		} else {
+			req.IdempotencyKey = providedKey
+		}
 		queuePayment(req)
 		return
 	}
+
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	md := metadata.New(map[string]string{"authorization": currentToken})
+	ctx = metadata.NewOutgoingContext(ctx, md)
+	req := &pb.PaymentRequest{
+		Token:  currentToken,
+		ToBank: toBank,
+		Amount: amount,
+	}
+	if providedKey == "" {
+		req.IdempotencyKey = generateIdempotencyKey()
+	} else {
+		req.IdempotencyKey = providedKey
+	}
 	resp, err := currentClient.ProcessPayment(ctx, req)
 	if err != nil {
-		log.Printf("[CLIENT] Payment processing failed: %v. Queuing payment with key %s.", err, req.IdempotencyKey)
+		log.Printf("[CLIENT] Payment processing failed: %v. Queuing payment.", err)
 		clientMu.Lock()
 		pgClient = nil
 		clientMu.Unlock()
@@ -193,30 +208,14 @@ func processPayment(ctx context.Context, req *pb.PaymentRequest) {
 		return
 	}
 	if !resp.Success {
-		log.Printf("[CLIENT] Payment processing failed: %s. Queuing payment with key %s.", resp.Message, req.IdempotencyKey)
+		log.Printf("[CLIENT] Payment processing failed: %s. Queuing payment.", resp.Message)
 		queuePayment(req)
 		return
 	}
 	fmt.Printf("[CLIENT] Payment Response: %s\n", resp.Message)
-
-	// Idempotency check: resend the same payment.
-	resp2, err := currentClient.ProcessPayment(ctx, req)
-	if err != nil {
-		log.Printf("[CLIENT] Payment processing retry failed: %v. Queuing payment with key %s.", err, req.IdempotencyKey)
-		clientMu.Lock()
-		pgClient = nil
-		clientMu.Unlock()
-		queuePayment(req)
-		return
-	}
-	if !resp2.Success {
-		log.Printf("[CLIENT] Payment processing retry failed: %s. Queuing payment with key %s.", resp2.Message, req.IdempotencyKey)
-		queuePayment(req)
-		return
-	}
-	fmt.Printf("[CLIENT] Payment Response on idempotent retry: %s\n", resp2.Message)
 }
 
+// queuePayment adds a payment request to the offline queue.
 func queuePayment(req *pb.PaymentRequest) {
 	offlineQueue.Lock()
 	defer offlineQueue.Unlock()
@@ -230,6 +229,7 @@ func queuePayment(req *pb.PaymentRequest) {
 	log.Printf("[CLIENT] Queued payment with key %s for offline processing", req.IdempotencyKey)
 }
 
+// retryOfflinePayments periodically retries queued payments.
 func retryOfflinePayments(token string) {
 	ticker := time.NewTicker(10 * time.Second)
 	defer ticker.Stop()
@@ -263,5 +263,102 @@ func retryOfflinePayments(token string) {
 		}
 		offlineQueue.queue = remaining
 		offlineQueue.Unlock()
+	}
+}
+
+// printHelp displays the list of available commands.
+func printHelp() {
+	helpText := `
+Available commands:
+  register <username> <password> <bankAccount> <initialBalance>   Register a new client.
+  auth <username> <password>                                       Authenticate and obtain a token.
+  balance                                                          Get the current balance.
+  pay <to_bank> <amount> [idempotency_key]                           Make a payment (idempotency key is optional).
+  help                                                             Display this help message.
+  exit                                                             Exit the client.
+`
+	fmt.Println(helpText)
+}
+
+func main() {
+	// Load CA certificate.
+	caCertPath := "../certificates/ca.crt"
+	caCert, err := ioutil.ReadFile(caCertPath)
+	if err != nil {
+		log.Fatalf("[CLIENT] Could not read CA certificate from %s: %v", caCertPath, err)
+	}
+	caCertPool := x509.NewCertPool()
+	if !caCertPool.AppendCertsFromPEM(caCert) {
+		log.Fatalf("[CLIENT] Failed to append CA certificate")
+	}
+	creds := credentials.NewTLS(&tls.Config{
+		RootCAs: caCertPool,
+	})
+
+	// Start background goroutine to establish connection.
+	go connectPaymentGateway(creds)
+
+	// Start offline payment retry goroutine.
+	go retryOfflinePayments(currentToken)
+
+	// Read user commands from stdin.
+	scanner := bufio.NewScanner(os.Stdin)
+	fmt.Println("Interactive Payment Client")
+	printHelp()
+	for {
+		fmt.Print("> ")
+		if !scanner.Scan() {
+			break
+		}
+		line := scanner.Text()
+		if len(strings.TrimSpace(line)) == 0 {
+			continue
+		}
+		tokens := strings.Fields(line)
+		command := strings.ToLower(tokens[0])
+		switch command {
+		case "help":
+			printHelp()
+		case "exit":
+			fmt.Println("Exiting client.")
+			os.Exit(0)
+		case "register":
+			if len(tokens) != 5 {
+				fmt.Println("Usage: register <username> <password> <bankAccount> <initialBalance>")
+				continue
+			}
+			initialBalance, err := strconv.ParseFloat(tokens[4], 64)
+			if err != nil {
+				fmt.Println("Invalid initialBalance value.")
+				continue
+			}
+			registerClient(tokens[1], tokens[2], tokens[3], initialBalance)
+		case "auth":
+			if len(tokens) != 3 {
+				fmt.Println("Usage: auth <username> <password>")
+				continue
+			}
+			authenticate(tokens[1], tokens[2])
+		case "balance":
+			getBalance()
+		case "pay":
+			// Support both: pay <to_bank> <amount> [idempotency_key]
+			if len(tokens) < 3 || len(tokens) > 4 {
+				fmt.Println("Usage: pay <to_bank> <amount> [idempotency_key]")
+				continue
+			}
+			amount, err := strconv.ParseFloat(tokens[2], 64)
+			if err != nil {
+				fmt.Println("Invalid amount value.")
+				continue
+			}
+			providedKey := ""
+			if len(tokens) == 4 {
+				providedKey = tokens[3]
+			}
+			processPayment(tokens[1], amount, providedKey)
+		default:
+			fmt.Println("Unknown command. Type 'help' for available commands.")
+		}
 	}
 }

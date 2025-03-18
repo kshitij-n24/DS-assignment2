@@ -12,8 +12,8 @@ import (
 	"syscall"
 	"time"
 
-	pb "github.com/<user>/DS-assignment2/P1/protofiles/backend"
-	lbpb "github.com/<user>/DS-assignment2/P1/protofiles/lb"
+	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
+	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
