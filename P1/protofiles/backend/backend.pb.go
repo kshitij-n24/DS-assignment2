@@ -22,12 +22,11 @@ const (
 )
 
 // Request message with two operands and an operation.
-// For the "hanoi" operation, field A represents the number of disks.
 type ComputeTaskRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	A             int32                  `protobuf:"varint,1,opt,name=a,proto3" json:"a,omitempty"`
 	B             int32                  `protobuf:"varint,2,opt,name=b,proto3" json:"b,omitempty"`
-	Operation     string                 `protobuf:"bytes,3,opt,name=operation,proto3" json:"operation,omitempty"` // e.g., "add", "multiply", "hanoi"
+	Operation     string                 `protobuf:"bytes,3,opt,name=operation,proto3" json:"operation,omitempty"` // e.g. "add", "multiply", "hanoi"
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }

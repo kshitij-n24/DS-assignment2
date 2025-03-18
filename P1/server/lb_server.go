@@ -6,12 +6,9 @@ import (
 	"fmt"
 	"log"
 	"net"
-	"os"
-	"os/signal"
 	"strconv"
 	"strings"
 	"sync"
-	"syscall"
 	"time"
 
 	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
@@ -25,13 +22,13 @@ type BackendInfo struct {
 	Load    int32
 }
 
-// LoadBalancerServer implements the LoadBalancer gRPC service with dynamic server discovery.
+// LoadBalancerServer implements the LoadBalancer gRPC service.
 type LoadBalancerServer struct {
 	lbpb.UnimplementedLoadBalancerServer
 	mu              sync.Mutex
-	backends        map[string]BackendInfo      // key: backend address -> info
-	leases          map[string]clientv3.LeaseID   // key: backend address -> lease id mapping
-	orderedBackends []string                    // maintains registration order
+	backends        map[string]BackendInfo    // key: backend address -> info
+	leases          map[string]clientv3.LeaseID // key: backend address -> lease id mapping
+	orderedBackends []string                  // maintains registration order
 	roundRobinIndex int
 	etcdClient      *clientv3.Client
 }
@@ -46,7 +43,6 @@ func NewLoadBalancerServer(etcdClient *clientv3.Client) *LoadBalancerServer {
 	}
 }
 
-// removeFromOrderedBackends removes a given backend address from the ordered slice.
 func (s *LoadBalancerServer) removeFromOrderedBackends(address string) {
 	newOrdered := []string{}
 	for _, a := range s.orderedBackends {
@@ -61,10 +57,9 @@ func (s *LoadBalancerServer) removeFromOrderedBackends(address string) {
 func (s *LoadBalancerServer) watchBackends() {
 	for {
 		ctx := context.Background()
-		// Initial load of keys.
 		resp, err := s.etcdClient.Get(ctx, "/backends/", clientv3.WithPrefix())
 		if err != nil {
-			log.Printf("Error getting backends from etcd: %v", err)
+			log.Printf("METRICS: Error getting backends from etcd: %v", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -72,7 +67,7 @@ func (s *LoadBalancerServer) watchBackends() {
 		for _, kv := range resp.Kvs {
 			load, err := strconv.Atoi(string(kv.Value))
 			if err != nil {
-				log.Printf("Error converting load for key %s: %v", string(kv.Key), err)
+				log.Printf("METRICS: Error converting load for key %s: %v", string(kv.Key), err)
 				continue
 			}
 			address := string(kv.Key)[len("/backends/"):]
@@ -94,11 +89,10 @@ func (s *LoadBalancerServer) watchBackends() {
 		}
 		s.mu.Unlock()
 
-		// Start watching for changes.
 		watchChan := s.etcdClient.Watch(ctx, "/backends/", clientv3.WithPrefix())
 		for watchResp := range watchChan {
 			if watchResp.Err() != nil {
-				log.Printf("Watch error: %v", watchResp.Err())
+				log.Printf("METRICS: Watch error: %v", watchResp.Err())
 				break
 			}
 			for _, ev := range watchResp.Events {
@@ -108,7 +102,7 @@ func (s *LoadBalancerServer) watchBackends() {
 				case clientv3.EventTypePut:
 					load, err := strconv.Atoi(string(ev.Kv.Value))
 					if err != nil {
-						log.Printf("Error converting load for backend %s: %v", address, err)
+						log.Printf("METRICS: Error converting load for backend %s: %v", address, err)
 						s.mu.Unlock()
 						continue
 					}
@@ -116,8 +110,7 @@ func (s *LoadBalancerServer) watchBackends() {
 						Address: address,
 						Load:    int32(load),
 					}
-					log.Printf("Watcher: Updated backend %s with load %d", address, load)
-					// Ensure the ordered list contains this address.
+					log.Printf("METRICS: [Watcher] Updated backend %s with load %d", address, load)
 					found := false
 					for _, a := range s.orderedBackends {
 						if a == address {
@@ -132,12 +125,12 @@ func (s *LoadBalancerServer) watchBackends() {
 					delete(s.backends, address)
 					delete(s.leases, address)
 					s.removeFromOrderedBackends(address)
-					log.Printf("Watcher: Removed backend %s", address)
+					log.Printf("METRICS: [Watcher] Removed backend %s", address)
 				}
 				s.mu.Unlock()
 			}
 		}
-		log.Printf("Watch channel closed, restarting watch...")
+		log.Printf("METRICS: Watch channel closed, restarting watch...")
 		time.Sleep(5 * time.Second)
 	}
 }
@@ -151,19 +144,17 @@ func (s *LoadBalancerServer) RegisterBackend(ctx context.Context, req *lbpb.Regi
 	// Create a new lease with a TTL of 10 seconds.
 	leaseResp, err := s.etcdClient.Grant(ctx, 10)
 	if err != nil {
-		log.Printf("Failed to create lease for backend %s: %v", req.ServerAddress, err)
+		log.Printf("METRICS: Failed to create lease for backend %s: %v", req.ServerAddress, err)
 		return &lbpb.RegisterBackendResponse{Success: false}, err
 	}
 
-	// Put key with the lease.
 	_, err = s.etcdClient.Put(ctx, key, "0", clientv3.WithLease(leaseResp.ID))
 	if err != nil {
-		log.Printf("Failed to register backend %s in etcd: %v", req.ServerAddress, err)
+		log.Printf("METRICS: Failed to register backend %s in etcd: %v", req.ServerAddress, err)
 		return &lbpb.RegisterBackendResponse{Success: false}, err
 	}
 	s.leases[req.ServerAddress] = leaseResp.ID
 
-	// Maintain registration order.
 	found := false
 	for _, a := range s.orderedBackends {
 		if a == req.ServerAddress {
@@ -175,7 +166,7 @@ func (s *LoadBalancerServer) RegisterBackend(ctx context.Context, req *lbpb.Regi
 		s.orderedBackends = append(s.orderedBackends, req.ServerAddress)
 	}
 
-	log.Printf("Registered backend: %s", req.ServerAddress)
+	log.Printf("METRICS: Registered backend: %s", req.ServerAddress)
 	return &lbpb.RegisterBackendResponse{Success: true}, nil
 }
 
@@ -186,10 +177,9 @@ func (s *LoadBalancerServer) ReportLoad(ctx context.Context, req *lbpb.ReportLoa
 	s.mu.Unlock()
 
 	if !exists {
-		// Auto-register the backend if not already registered.
 		regResp, err := s.RegisterBackend(ctx, &lbpb.RegisterBackendRequest{ServerAddress: req.ServerAddress})
 		if err != nil || !regResp.Success {
-			log.Printf("Auto-registration failed for backend %s", req.ServerAddress)
+			log.Printf("METRICS: Auto-registration failed for backend %s", req.ServerAddress)
 			return &lbpb.ReportLoadResponse{Success: false}, fmt.Errorf("backend not registered")
 		}
 		s.mu.Lock()
@@ -210,36 +200,34 @@ func (s *LoadBalancerServer) ReportLoad(ctx context.Context, req *lbpb.ReportLoa
 	defer cancel()
 	_, err := s.etcdClient.Put(ctxPut, key, fmt.Sprintf("%d", load), clientv3.WithLease(leaseID))
 	if err != nil {
-		log.Printf("Failed to report load for backend %s: %v", req.ServerAddress, err)
+		log.Printf("METRICS: Failed to report load for backend %s: %v", req.ServerAddress, err)
 		return &lbpb.ReportLoadResponse{Success: false}, err
 	}
 	ctxKA, cancelKA := context.WithTimeout(ctx, 2*time.Second)
 	defer cancelKA()
 	_, err = s.etcdClient.KeepAliveOnce(ctxKA, leaseID)
 	if err != nil {
-		log.Printf("Failed to renew lease for backend %s: %v", req.ServerAddress, err)
+		log.Printf("METRICS: Failed to renew lease for backend %s: %v", req.ServerAddress, err)
 		return &lbpb.ReportLoadResponse{Success: false}, err
 	}
-	log.Printf("Reported load %d for backend %s", load, req.ServerAddress)
+	log.Printf("METRICS: Reported load %d for backend %s", load, req.ServerAddress)
 	return &lbpb.ReportLoadResponse{Success: true}, nil
 }
 
 // GetBestServer selects a backend server based on the requested policy.
-// For PICK_FIRST, it waits (with context cancellation) until the first-registered backend's load is below a defined threshold.
 func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *lbpb.GetBestServerRequest) (*lbpb.GetBestServerResponse, error) {
 	switch req.Policy {
 	case lbpb.BalancingPolicy_PICK_FIRST:
-		const threshold = 50 // Consider backend free if load <= 50.
+		const threshold = 50 // free if load <= 50.
 		for {
 			var firstAddr string
 			var load int32
 			var exists bool
 
-			// Acquire current state briefly.
 			s.mu.Lock()
 			if len(s.orderedBackends) == 0 {
 				s.mu.Unlock()
-				log.Printf("No backends available")
+				log.Printf("METRICS: No backends available")
 				return &lbpb.GetBestServerResponse{ServerAddress: ""}, nil
 			}
 			firstAddr = s.orderedBackends[0]
@@ -250,17 +238,15 @@ func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *lbpb.GetBes
 			s.mu.Unlock()
 
 			if !exists {
-				// Remove stale entry and retry.
 				s.mu.Lock()
 				s.removeFromOrderedBackends(firstAddr)
 				s.mu.Unlock()
 				continue
 			}
 			if load <= threshold {
-				log.Printf("Selected backend %s for policy PICK_FIRST", firstAddr)
-				return &lbpb.GetBestServerResponse{ServerAddress: firstAddr, Load: load}, nil
+				log.Printf("METRICS: Selected backend %s for policy PICK_FIRST", firstAddr)
+				return &lbpb.GetBestServerResponse{ServerAddress: firstAddr}, nil
 			}
-			// Wait for 1 second or until context cancellation.
 			select {
 			case <-ctx.Done():
 				return nil, ctx.Err()
@@ -270,12 +256,12 @@ func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *lbpb.GetBes
 	case lbpb.BalancingPolicy_ROUND_ROBIN:
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		backendsSlice := []BackendInfo{}
+		backendsSlice := make([]BackendInfo, 0, len(s.backends))
 		for _, b := range s.backends {
 			backendsSlice = append(backendsSlice, b)
 		}
 		if len(backendsSlice) == 0 {
-			log.Printf("No backends available")
+			log.Printf("METRICS: No backends available")
 			return &lbpb.GetBestServerResponse{ServerAddress: ""}, nil
 		}
 		selected := backendsSlice[s.roundRobinIndex%len(backendsSlice)]
@@ -283,17 +269,17 @@ func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *lbpb.GetBes
 		if s.roundRobinIndex > 1000000 {
 			s.roundRobinIndex = 0
 		}
-		log.Printf("Selected backend %s for policy %s", selected.Address, lbpb.BalancingPolicy_name[int32(req.Policy)])
-		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address, Load: selected.Load}, nil
+		log.Printf("METRICS: Selected backend %s for policy ROUND_ROBIN", selected.Address)
+		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address}, nil
 	case lbpb.BalancingPolicy_LEAST_LOAD:
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		backendsSlice := []BackendInfo{}
+		backendsSlice := make([]BackendInfo, 0, len(s.backends))
 		for _, b := range s.backends {
 			backendsSlice = append(backendsSlice, b)
 		}
 		if len(backendsSlice) == 0 {
-			log.Printf("No backends available")
+			log.Printf("METRICS: No backends available")
 			return &lbpb.GetBestServerResponse{ServerAddress: ""}, nil
 		}
 		selected := backendsSlice[0]
@@ -302,67 +288,56 @@ func (s *LoadBalancerServer) GetBestServer(ctx context.Context, req *lbpb.GetBes
 				selected = b
 			}
 		}
-		log.Printf("Selected backend %s for policy %s", selected.Address, lbpb.BalancingPolicy_name[int32(req.Policy)])
-		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address, Load: selected.Load}, nil
+		log.Printf("METRICS: Selected backend %s for policy LEAST_LOAD", selected.Address)
+		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address}, nil
 	default:
 		s.mu.Lock()
 		defer s.mu.Unlock()
-		backendsSlice := []BackendInfo{}
+		backendsSlice := make([]BackendInfo, 0, len(s.backends))
 		for _, b := range s.backends {
 			backendsSlice = append(backendsSlice, b)
 		}
 		if len(backendsSlice) == 0 {
-			log.Printf("No backends available")
+			log.Printf("METRICS: No backends available")
 			return &lbpb.GetBestServerResponse{ServerAddress: ""}, nil
 		}
 		selected := backendsSlice[0]
-		log.Printf("Selected backend %s for default policy", selected.Address)
-		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address, Load: selected.Load}, nil
+		log.Printf("METRICS: Selected backend %s for default policy", selected.Address)
+		return &lbpb.GetBestServerResponse{ServerAddress: selected.Address}, nil
 	}
 }
 
 func main() {
-	var port int
-	var etcdEndpoints string
-	flag.IntVar(&port, "port", 50051, "LB server port")
-	flag.StringVar(&etcdEndpoints, "etcd", "localhost:2379", "Comma separated etcd endpoints")
+	// Flags for LB server.
+	var lbPort int
+	var etcdEndpointsStr string
+	flag.IntVar(&lbPort, "port", 50051, "Load Balancer server port")
+	flag.StringVar(&etcdEndpointsStr, "etcd_endpoints", "localhost:2379", "Comma-separated list of etcd endpoints")
 	flag.Parse()
 
-	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", port))
-	if err != nil {
-		log.Fatalf("Failed to listen: %v", err)
-	}
-
-	endpoints := []string{}
-	for _, ep := range strings.Split(etcdEndpoints, ",") {
-		endpoints = append(endpoints, ep)
-	}
-
-	etcdClient, err := clientv3.New(clientv3.Config{
-		Endpoints:   endpoints,
+	// Parse etcd endpoints.
+	etcdEndpoints := strings.Split(etcdEndpointsStr, ",")
+	etcdConfig := clientv3.Config{
+		Endpoints:   etcdEndpoints,
 		DialTimeout: 5 * time.Second,
-	})
+	}
+	etcdClient, err := clientv3.New(etcdConfig)
 	if err != nil {
-		log.Fatalf("Failed to create etcd client: %v", err)
+		log.Fatalf("METRICS: Failed to connect to etcd: %v", err)
 	}
 	defer etcdClient.Close()
 
-	grpcServer := grpc.NewServer()
 	lbServer := NewLoadBalancerServer(etcdClient)
 	go lbServer.watchBackends()
 
+	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", lbPort))
+	if err != nil {
+		log.Fatalf("METRICS: Failed to listen on port %d: %v", lbPort, err)
+	}
+	grpcServer := grpc.NewServer()
 	lbpb.RegisterLoadBalancerServer(grpcServer, lbServer)
-	log.Printf("Load Balancer server listening on :%d", port)
-
-	// Graceful shutdown.
-	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
-	go func() {
-		if err := grpcServer.Serve(lis); err != nil {
-			log.Fatalf("Failed to serve: %v", err)
-		}
-	}()
-	<-stop
-	log.Println("LB Server shutting down gracefully...")
-	grpcServer.GracefulStop()
+	log.Printf("METRICS: Load Balancer server listening on port %d", lbPort)
+	if err := grpcServer.Serve(lis); err != nil {
+		log.Fatalf("METRICS: Failed to serve: %v", err)
+	}
 }

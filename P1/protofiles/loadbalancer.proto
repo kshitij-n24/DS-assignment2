@@ -4,7 +4,7 @@ package lb;
 
 option go_package = "./lb";
 
-// Define the load balancing policies.
+// Enum for balancing policies.
 enum BalancingPolicy {
   BalancingPolicy_UNSPECIFIED = 0;
   BalancingPolicy_PICK_FIRST = 1;
@@ -38,10 +38,9 @@ message GetBestServerRequest {
   BalancingPolicy policy = 1;
 }
 
-// Response message for querying the best backend.
+// Response message with the best backend server address.
 message GetBestServerResponse {
   string server_address = 1;
-  int32 load = 2;
 }
 
 // The Load Balancer service definition.

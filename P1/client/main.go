@@ -5,11 +5,12 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
+	"sync"
 	"time"
 
-	backendpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
+	pb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/backend"
 	lbpb "github.com/kshitij-n24/DS-assignment2/P1/protofiles/lb"
-
 	"google.golang.org/grpc"
 )
 
@@ -18,6 +19,7 @@ const (
 	retryDelay    = 2 * time.Second
 )
 
+// dialWithRetries attempts to establish a connection to the given address.
 func dialWithRetries(address string, opts ...grpc.DialOption) (*grpc.ClientConn, error) {
 	var conn *grpc.ClientConn
 	var err error
@@ -32,16 +34,75 @@ func dialWithRetries(address string, opts ...grpc.DialOption) (*grpc.ClientConn,
 	return nil, err
 }
 
+// performComputeTask performs the full sequence of querying the LB and then sending a compute task.
+func performComputeTask(lbAddress string, balPolicy lbpb.BalancingPolicy, op string, a, b int) (time.Duration, int32, error) {
+	// Connect to the LB server.
+	lbConn, err := dialWithRetries(lbAddress, grpc.WithInsecure())
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to connect to LB server: %v", err)
+	}
+	defer lbConn.Close()
+
+	lbClient := lbpb.NewLoadBalancerClient(lbConn)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+
+	getReq := &lbpb.GetBestServerRequest{Policy: balPolicy}
+	getRes, err := lbClient.GetBestServer(ctx, getReq)
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to get best server from LB: %v", err)
+	}
+
+	if getRes.ServerAddress == "" {
+		return 0, 0, fmt.Errorf("no available backend servers")
+	}
+
+	log.Printf("METRICS: Using backend server: %s", getRes.ServerAddress)
+
+	// Connect to the selected backend server.
+	backendConn, err := dialWithRetries(getRes.ServerAddress, grpc.WithInsecure())
+	if err != nil {
+		return 0, 0, fmt.Errorf("failed to connect to backend server: %v", err)
+	}
+	defer backendConn.Close()
+
+	backendClient := backendpb.NewComputationalServiceClient(backendConn)
+	compCtx, compCancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer compCancel()
+
+	req := &backendpb.ComputeTaskRequest{
+		A:         int32(a),
+		B:         int32(b),
+		Operation: op,
+	}
+	start := time.Now()
+	res, err := backendClient.ComputeTask(compCtx, req)
+	latency := time.Since(start)
+	if err != nil {
+		return latency, 0, fmt.Errorf("ComputeTask failed: %v", err)
+	}
+	return latency, res.Result, nil
+}
+
 func main() {
+	// Common flags.
 	var lbAddress string
 	var policy string
 	var op string
 	var a, b int
 	flag.StringVar(&lbAddress, "lb", "localhost:50051", "Load Balancer address")
 	flag.StringVar(&policy, "policy", "PICK_FIRST", "Balancing policy: PICK_FIRST, ROUND_ROBIN, LEAST_LOAD")
-	flag.StringVar(&op, "operation", "loop", "Operation for compute task: loop, add, multiply")
-	flag.IntVar(&a, "a", 50, "First operand (or multiplier for 'loop')")
-	flag.IntVar(&b, "b", 0, "Second operand (ignored for 'loop')")
+	flag.StringVar(&op, "operation", "add", "Operation for compute task: add, multiply, hanoi")
+	flag.IntVar(&a, "a", 10, "First operand (or number of disks for hanoi)")
+	flag.IntVar(&b, "b", 20, "Second operand (ignored for hanoi)")
+
+	// Scale test flags.
+	var scaleTest bool
+	var numRequests int
+	var concurrency int
+	flag.BoolVar(&scaleTest, "scale", false, "Enable scale test mode (multiple concurrent requests)")
+	flag.IntVar(&numRequests, "num_requests", 100, "Total number of requests in scale test")
+	flag.IntVar(&concurrency, "concurrency", 10, "Number of concurrent goroutines in scale test")
 	flag.Parse()
 
 	// Map policy string to proto enum.
@@ -58,55 +119,62 @@ func main() {
 		balPolicy = lbpb.BalancingPolicy_PICK_FIRST
 	}
 
-	// Connect to the LB server.
-	lbConn, err := dialWithRetries(lbAddress, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Failed to connect to LB server: %v", err)
+	// Single request mode.
+	if !scaleTest {
+		latency, result, err := performComputeTask(lbAddress, balPolicy, op, a, b)
+		if err != nil {
+			log.Fatalf("Error: %v", err)
+		}
+		fmt.Printf("Compute result: %d (latency: %v)\n", result, latency)
+		os.Exit(0)
 	}
-	defer lbConn.Close()
-	lbClient := lbpb.NewLoadBalancerClient(lbConn)
 
-	// Query LB server for the best backend.
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
-	defer cancel()
-	getReq := &lbpb.GetBestServerRequest{Policy: balPolicy}
-	getRes, err := lbClient.GetBestServer(ctx, getReq)
-	if err != nil {
-		log.Fatalf("Failed to get best server from LB: %v", err)
-	}
-	if getRes.ServerAddress == "" {
-		log.Fatalf("No available backend servers")
-	}
-	backendAddr := getRes.ServerAddress
-	backendLoad := getRes.Load
+	// Scale test mode.
+	log.Printf("METRICS: Starting scale test with %d total requests at concurrency %d", numRequests, concurrency)
+	var wg sync.WaitGroup
+	latencyCh := make(chan time.Duration, numRequests)
+	errCh := make(chan error, numRequests)
 
-	// Connect to the selected backend.
-	backendConn, err := dialWithRetries(backendAddr, grpc.WithInsecure())
-	if err != nil {
-		log.Fatalf("Failed to connect to backend server: %v", err)
+	startTotal := time.Now()
+	sem := make(chan struct{}, concurrency)
+	for i := 0; i < numRequests; i++ {
+		wg.Add(1)
+		sem <- struct{}{}
+		go func(reqID int) {
+			defer wg.Done()
+			lat, _, err := performComputeTask(lbAddress, balPolicy, op, a, b)
+			if err != nil {
+				errCh <- fmt.Errorf("request %d: %v", reqID, err)
+			} else {
+				latencyCh <- lat
+			}
+			<-sem
+		}(i)
 	}
-	defer backendConn.Close()
-	backendClient := backendpb.NewComputationalServiceClient(backendConn)
+	wg.Wait()
+	totalDuration := time.Since(startTotal)
+	close(latencyCh)
+	close(errCh)
 
-	// Send compute request and measure response time.
-	compCtx, compCancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer compCancel()
-	req := &backendpb.ComputeTaskRequest{
-		A:         int32(a),
-		B:         int32(b),
-		Operation: op,
+	// Compute metrics.
+	var sumLatency time.Duration
+	count := 0
+	for lat := range latencyCh {
+		sumLatency += lat
+		count++
 	}
-	start := time.Now()
-	_, err = backendClient.ComputeTask(compCtx, req)
-	if err != nil {
-		log.Fatalf("ComputeTask failed: %v", err)
+	avgLatency := time.Duration(0)
+	if count > 0 {
+		avgLatency = sumLatency / time.Duration(count)
 	}
-	latency := time.Since(start).Milliseconds()
+	throughput := float64(count) / totalDuration.Seconds()
 
-	// Get current timestamp.
-	timestamp := time.Now().Unix()
+	// Log errors if any.
+	for err := range errCh {
+		log.Printf("METRICS: Error encountered: %v", err)
+	}
 
-	// Print a CSV line with fields:
-	// timestamp,client_id,policy,operation,a,b,response_time_ms,backend_address,backend_load
-	fmt.Printf("%d,NA,%s,%s,%d,%d,%d,%s,%d\n", timestamp, policy, op, a, b, latency, backendAddr, backendLoad)
+	// Uniform metric output.
+	log.Printf("METRICS: Scale Test Completed - Total Requests: %d, Successful: %d, Total Time: %v, Average Latency: %v, Throughput: %.2f req/sec",
+		numRequests, count, totalDuration, avgLatency, throughput)
 }
