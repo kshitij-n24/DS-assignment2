@@ -1,0 +1,300 @@
+2025/03/19 23:49:14 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:14 Using backend server: localhost:50053
+2025/03/19 23:49:14 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:14 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:14 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:14 Using backend server: localhost:50053
+2025/03/19 23:49:14 Using backend server: localhost:50055
+2025/03/19 23:49:15 Using backend server: localhost:50059
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50059
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 536.350201ms, Average Latency: 510.751019ms, Throughput: 1.86 req/sec
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50060
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50060
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50053
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50058
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 509.193688ms, Average Latency: 505.718608ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 541.545469ms, Average Latency: 512.69372ms, Throughput: 1.85 req/sec
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 551.612459ms, Average Latency: 528.572086ms, Throughput: 1.81 req/sec
+2025/03/19 23:49:15 Using backend server: localhost:50055
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 512.485558ms, Average Latency: 501.84059ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50058
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 505.63712ms, Average Latency: 501.785821ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:15 Using backend server: localhost:50056
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Using backend server: localhost:50059
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Using backend server: localhost:50052
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50059
+2025/03/19 23:49:15 Using backend server: localhost:50058
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50058
+2025/03/19 23:49:15 Using backend server: localhost:50052
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 554.069468ms, Average Latency: 512.764101ms, Throughput: 1.80 req/sec
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50055
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 505.694618ms, Average Latency: 501.639006ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:15 Using backend server: localhost:50057
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50054
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50061
+2025/03/19 23:49:15 Using backend server: localhost:50053
+2025/03/19 23:49:15 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.435673ms, Average Latency: 502.2785ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50058
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:15 Using backend server: localhost:50054
+2025/03/19 23:49:15 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50060
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 529.782421ms, Average Latency: 504.589552ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Using backend server: localhost:50061
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50061
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Using backend server: localhost:50056
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50058
+2025/03/19 23:49:16 Using backend server: localhost:50059
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50059
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 523.268123ms, Average Latency: 520.072886ms, Throughput: 1.91 req/sec
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50056
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 517.077808ms, Average Latency: 502.864818ms, Throughput: 1.93 req/sec
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50058
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50058
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 544.997753ms, Average Latency: 503.340766ms, Throughput: 1.83 req/sec
+2025/03/19 23:49:16 Using backend server: localhost:50060
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50060
+2025/03/19 23:49:16 Using backend server: localhost:50056
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 505.562727ms, Average Latency: 502.306888ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 Using backend server: localhost:50059
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50056
+2025/03/19 23:49:16 Using backend server: localhost:50059
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 575.09028ms, Average Latency: 508.416076ms, Throughput: 1.74 req/sec
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Using backend server: localhost:50060
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50058
+2025/03/19 23:49:16 Using backend server: localhost:50056
+2025/03/19 23:49:16 Using backend server: localhost:50058
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 520.877759ms, Average Latency: 501.908515ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Using backend server: localhost:50053
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50061
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 518.885187ms, Average Latency: 510.442119ms, Throughput: 1.93 req/sec
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50054
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50052
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50061
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50057
+2025/03/19 23:49:16 Starting scale test with 1 total requests at concurrency 1
+2025/03/19 23:49:16 Using backend server: localhost:50055
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 511.578957ms, Average Latency: 505.095088ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 522.78891ms, Average Latency: 510.91106ms, Throughput: 1.91 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.717201ms, Average Latency: 504.32524ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 519.717576ms, Average Latency: 502.280723ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 505.708755ms, Average Latency: 502.325677ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 540.966303ms, Average Latency: 513.873154ms, Throughput: 1.85 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 514.912083ms, Average Latency: 509.682823ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.705643ms, Average Latency: 502.709635ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 520.347784ms, Average Latency: 503.002761ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 512.456066ms, Average Latency: 503.432507ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 508.710916ms, Average Latency: 505.053948ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 514.854447ms, Average Latency: 502.0872ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 508.591897ms, Average Latency: 503.884658ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.048905ms, Average Latency: 504.738772ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 512.489884ms, Average Latency: 502.20546ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 506.700703ms, Average Latency: 503.31215ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 539.845491ms, Average Latency: 503.552895ms, Throughput: 1.85 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 512.042977ms, Average Latency: 503.685308ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 523.969854ms, Average Latency: 501.605794ms, Throughput: 1.91 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 514.982493ms, Average Latency: 503.220169ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 530.176927ms, Average Latency: 503.294586ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 515.420837ms, Average Latency: 509.377324ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 528.686226ms, Average Latency: 503.26472ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 532.955341ms, Average Latency: 505.83321ms, Throughput: 1.88 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 532.377802ms, Average Latency: 501.623433ms, Throughput: 1.88 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 530.798936ms, Average Latency: 503.765039ms, Throughput: 1.88 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 517.527742ms, Average Latency: 506.340715ms, Throughput: 1.93 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 527.005475ms, Average Latency: 503.310042ms, Throughput: 1.90 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 515.777209ms, Average Latency: 504.711992ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 541.373713ms, Average Latency: 503.512642ms, Throughput: 1.85 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 513.494257ms, Average Latency: 502.796803ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 519.848055ms, Average Latency: 502.540969ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.997565ms, Average Latency: 502.473329ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.531003ms, Average Latency: 502.72103ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.227499ms, Average Latency: 502.877116ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 511.305913ms, Average Latency: 502.786615ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 508.050481ms, Average Latency: 503.166831ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 509.652058ms, Average Latency: 502.02111ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 513.472221ms, Average Latency: 503.749652ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 513.888189ms, Average Latency: 508.4302ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 514.876334ms, Average Latency: 504.609565ms, Throughput: 1.94 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 511.46695ms, Average Latency: 502.252011ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 519.512126ms, Average Latency: 502.539139ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 544.403296ms, Average Latency: 511.966518ms, Throughput: 1.84 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 526.610335ms, Average Latency: 504.669537ms, Throughput: 1.90 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 530.252486ms, Average Latency: 507.756903ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.591348ms, Average Latency: 504.28087ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 522.539055ms, Average Latency: 504.887067ms, Throughput: 1.91 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 510.264748ms, Average Latency: 503.565253ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 528.399916ms, Average Latency: 511.962739ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 519.862937ms, Average Latency: 509.77519ms, Throughput: 1.92 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 506.06906ms, Average Latency: 502.583174ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 528.144124ms, Average Latency: 503.942892ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 517.260447ms, Average Latency: 502.052674ms, Throughput: 1.93 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 518.108905ms, Average Latency: 504.595738ms, Throughput: 1.93 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 529.018913ms, Average Latency: 507.372526ms, Throughput: 1.89 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.174671ms, Average Latency: 501.96386ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 511.508474ms, Average Latency: 502.899845ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 512.573127ms, Average Latency: 504.086107ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.076438ms, Average Latency: 502.520341ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.735419ms, Average Latency: 501.608459ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 509.598272ms, Average Latency: 502.341309ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 506.992543ms, Average Latency: 503.747001ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.0261ms, Average Latency: 501.525317ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.289504ms, Average Latency: 502.856581ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.913156ms, Average Latency: 501.80461ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.821068ms, Average Latency: 501.533525ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.163517ms, Average Latency: 501.951436ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 509.015113ms, Average Latency: 502.17937ms, Throughput: 1.96 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 507.399477ms, Average Latency: 502.891758ms, Throughput: 1.97 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 505.464885ms, Average Latency: 501.396855ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 513.589107ms, Average Latency: 501.734365ms, Throughput: 1.95 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.165341ms, Average Latency: 501.061003ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.638789ms, Average Latency: 501.738658ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.818171ms, Average Latency: 501.508774ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.976052ms, Average Latency: 501.874548ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.098295ms, Average Latency: 502.164682ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 504.052356ms, Average Latency: 501.766177ms, Throughput: 1.98 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.035921ms, Average Latency: 501.056474ms, Throughput: 1.99 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.107144ms, Average Latency: 501.317862ms, Throughput: 1.99 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.582852ms, Average Latency: 501.554149ms, Throughput: 1.99 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 502.99064ms, Average Latency: 501.104054ms, Throughput: 1.99 req/sec
+2025/03/19 23:49:16 [METRICS]: Scale Test Completed - Total Requests: 1, Successful: 1, Total Time: 503.683028ms, Average Latency: 501.873776ms, Throughput: 1.99 req/sec

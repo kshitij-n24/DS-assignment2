@@ -1,3 +1,4 @@
+// protofiles/loadbalancer.proto
 syntax = "proto3";
 
 package lb;
@@ -6,39 +7,39 @@ option go_package = "./lb";
 
 // Enum for balancing policies.
 enum BalancingPolicy {
-  BalancingPolicy_UNSPECIFIED = 0;
-  BalancingPolicy_PICK_FIRST = 1;
-  BalancingPolicy_ROUND_ROBIN = 2;
-  BalancingPolicy_LEAST_LOAD = 3;
+  UNSPECIFIED = 0;
+  PICK_FIRST = 1;
+  ROUND_ROBIN = 2;
+  LEAST_LOAD = 3;
 }
 
-// Request message for backend registration.
+// Request for backend registration.
 message RegisterBackendRequest {
   string server_address = 1;
 }
 
-// Response message for backend registration.
+// Response for backend registration.
 message RegisterBackendResponse {
   bool success = 1;
 }
 
-// Request message for reporting load.
+// Request to report backend load.
 message ReportLoadRequest {
   string server_address = 1;
   int32 load = 2;
 }
 
-// Response message for reporting load.
+// Response for load report.
 message ReportLoadResponse {
   bool success = 1;
 }
 
-// Request message for querying the best backend.
+// Request for getting the best backend.
 message GetBestServerRequest {
   BalancingPolicy policy = 1;
 }
 
-// Response message with the best backend server address.
+// Response providing the selected backend.
 message GetBestServerResponse {
   string server_address = 1;
 }

@@ -9,7 +9,6 @@ import (
 	"net"
 	"os"
 	"os/signal"
-	"strconv"
 	"sync"
 	"syscall"
 	"time"
@@ -20,6 +19,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
+
+var dummyHolder int // dummy variable to prevent optimization in the heavy loop
 
 // global metrics for scale testing.
 var (
@@ -50,15 +51,20 @@ func (s *computationalServer) ComputeTask(ctx context.Context, req *pb.ComputeTa
 		result = int64(req.A) + int64(req.B)
 	case "multiply":
 		result = int64(req.A) * int64(req.B)
-	case "hanoi":
-		n := int(req.A)
-		if n < 1 {
-			return nil, status.Error(codes.InvalidArgument, "number of disks must be at least 1")
-		}
-		if n > 25 {
-			return nil, status.Error(codes.InvalidArgument, "too many disks, maximum allowed is 25")
-		}
-		result = int64(hanoi(n))
+	case "loop":
+		    n := int(req.A)
+		    if n < 1 {
+		        return nil, status.Error(codes.InvalidArgument, "number of iterations must be at least 1")
+		    }
+		    if n > 5000 {
+		        return nil, status.Error(codes.InvalidArgument, "too many iterations, maximum allowed is 5000")
+		    }
+		    // Simulate heavy load: iterate 10 million times multiplied by parameter n.
+		    iterations := 10000000 * n
+		    for i := 0; i < iterations; i++ {
+		        dummyHolder = i // dummy assignment to force the loop execution
+		    }
+		    result = int64(dummyHolder)
 	default:
 		return nil, status.Error(codes.InvalidArgument, "unsupported operation")
 	}
@@ -71,7 +77,8 @@ func (s *computationalServer) ComputeTask(ctx context.Context, req *pb.ComputeTa
 	totalProcTime += duration
 	metricsMu.Unlock()
 
-	log.Printf("METRICS: [ComputeTask] Operation=%s, Operands=(%d,%d), Result=%d, Latency=%v", req.Operation, req.A, req.B, result, duration)
+	// Log per-request information without the METRICS prefix.
+	log.Printf("[ComputeTask] Operation=%s, Operands=(%d,%d), Result=%d, Latency=%v", req.Operation, req.A, req.B, result, duration)
 	return &pb.ComputeTaskResponse{Result: int32(result)}, nil
 }
 
@@ -80,7 +87,7 @@ func registerWithLB(lbAddress, backendAddress string) {
 	for {
 		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
 		if err != nil {
-			log.Printf("METRICS: Failed to connect to LB server: %v. Retrying in 5 seconds...", err)
+			log.Printf("Failed to connect to LB server: %v. Retrying in 5 seconds...", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -91,11 +98,11 @@ func registerWithLB(lbAddress, backendAddress string) {
 		cancel()
 		conn.Close()
 		if err != nil || !res.Success {
-			log.Printf("METRICS: Failed to register with LB server: %v. Retrying in 5 seconds...", err)
+			log.Printf("Failed to register with LB server: %v. Retrying in 5 seconds...", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
-		log.Printf("METRICS: Successfully registered with LB at %s", lbAddress)
+		log.Printf("Successfully registered with LB at %s", lbAddress)
 		break
 	}
 }
@@ -105,7 +112,7 @@ func reportLoadPeriodically(lbAddress, backendAddress string) {
 	for {
 		conn, err := grpc.Dial(lbAddress, grpc.WithInsecure())
 		if err != nil {
-			log.Printf("METRICS: Failed to connect to LB server for load reporting: %v. Retrying in 5 seconds...", err)
+			log.Printf("Failed to connect to LB server for load reporting: %v. Retrying in 5 seconds...", err)
 			time.Sleep(5 * time.Second)
 			continue
 		}
@@ -117,9 +124,9 @@ func reportLoadPeriodically(lbAddress, backendAddress string) {
 		cancel()
 		conn.Close()
 		if err != nil {
-			log.Printf("METRICS: Error reporting load: %v", err)
+			log.Printf("Error reporting load: %v", err)
 		} else {
-			log.Printf("METRICS: Reported load %d for backend %s", load, backendAddress)
+			log.Printf("Reported load %d for backend %s", load, backendAddress)
 		}
 		time.Sleep(5 * time.Second)
 	}
@@ -135,7 +142,8 @@ func startMetricsLogger() {
 			if reqCount > 0 {
 				avgLatency = totalProcTime / time.Duration(reqCount)
 			}
-			log.Printf("METRICS: Backend Stats - Total Requests: %d, Average Processing Latency: %v", reqCount, avgLatency)
+			// This is the aggregated metric output.
+			log.Printf("[METRICS]: Backend Stats - Total Requests: %d, Average Processing Latency: %v", reqCount, avgLatency)
 			metricsMu.Unlock()
 		}
 	}()
@@ -151,11 +159,11 @@ func main() {
 	backendAddress := fmt.Sprintf("localhost:%d", backendPort)
 	lis, err := net.Listen("tcp", fmt.Sprintf(":%d", backendPort))
 	if err != nil {
-		log.Fatalf("METRICS: Failed to listen: %v", err)
+		log.Fatalf("Failed to listen: %v", err)
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterComputationalServiceServer(grpcServer, &computationalServer{})
-	log.Printf("METRICS: Backend server listening on %s", backendAddress)
+	log.Printf("Backend server listening on %s", backendAddress)
 
 	go registerWithLB(lbAddress, backendAddress)
 	go reportLoadPeriodically(lbAddress, backendAddress)
@@ -166,12 +174,12 @@ func main() {
 		c := make(chan os.Signal, 1)
 		signal.Notify(c, syscall.SIGINT, syscall.SIGTERM)
 		<-c
-		log.Println("METRICS: Backend server shutting down gracefully...")
+		log.Println("Backend server shutting down gracefully...")
 		grpcServer.GracefulStop()
 		os.Exit(0)
 	}()
 
 	if err := grpcServer.Serve(lis); err != nil {
-		log.Fatalf("METRICS: Failed to serve: %v", err)
+		log.Fatalf("Failed to serve: %v", err)
 	}
 }

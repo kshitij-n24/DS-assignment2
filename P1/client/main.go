@@ -44,7 +44,14 @@ func performComputeTask(lbAddress string, balPolicy lbpb.BalancingPolicy, op str
 	defer lbConn.Close()
 
 	lbClient := lbpb.NewLoadBalancerClient(lbConn)
-	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	var timeout time.Duration
+	// CHANGED: Increase timeout if using PICK_FIRST so that the LB can wait for the backend to become free.
+	if balPolicy == lbpb.BalancingPolicy_PICK_FIRST {
+		timeout = 10 * time.Second
+	} else {
+		timeout = 2 * time.Second
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
 
 	getReq := &lbpb.GetBestServerRequest{Policy: balPolicy}
@@ -57,7 +64,7 @@ func performComputeTask(lbAddress string, balPolicy lbpb.BalancingPolicy, op str
 		return 0, 0, fmt.Errorf("no available backend servers")
 	}
 
-	log.Printf("METRICS: Using backend server: %s", getRes.ServerAddress)
+	log.Printf("Using backend server: %s", getRes.ServerAddress)
 
 	// Connect to the selected backend server.
 	backendConn, err := dialWithRetries(getRes.ServerAddress, grpc.WithInsecure())
@@ -66,11 +73,11 @@ func performComputeTask(lbAddress string, balPolicy lbpb.BalancingPolicy, op str
 	}
 	defer backendConn.Close()
 
-	backendClient := backendpb.NewComputationalServiceClient(backendConn)
+	backendClient := pb.NewComputationalServiceClient(backendConn)
 	compCtx, compCancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer compCancel()
 
-	req := &backendpb.ComputeTaskRequest{
+	req := &pb.ComputeTaskRequest{
 		A:         int32(a),
 		B:         int32(b),
 		Operation: op,
@@ -130,7 +137,7 @@ func main() {
 	}
 
 	// Scale test mode.
-	log.Printf("METRICS: Starting scale test with %d total requests at concurrency %d", numRequests, concurrency)
+	log.Printf("Starting scale test with %d total requests at concurrency %d", numRequests, concurrency)
 	var wg sync.WaitGroup
 	latencyCh := make(chan time.Duration, numRequests)
 	errCh := make(chan error, numRequests)
@@ -171,10 +178,10 @@ func main() {
 
 	// Log errors if any.
 	for err := range errCh {
-		log.Printf("METRICS: Error encountered: %v", err)
+		log.Printf("Error encountered: %v", err)
 	}
 
-	// Uniform metric output.
-	log.Printf("METRICS: Scale Test Completed - Total Requests: %d, Successful: %d, Total Time: %v, Average Latency: %v, Throughput: %.2f req/sec",
+	// Final aggregated metric output.
+	log.Printf("[METRICS]: Scale Test Completed - Total Requests: %d, Successful: %d, Total Time: %v, Average Latency: %v, Throughput: %.2f req/sec",
 		numRequests, count, totalDuration, avgLatency, throughput)
 }

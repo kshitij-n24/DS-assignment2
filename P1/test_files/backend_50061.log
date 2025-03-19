@@ -1,0 +1,17 @@
+2025/03/19 23:49:02 Backend server listening on localhost:50061
+2025/03/19 23:49:02 Successfully registered with LB at localhost:50051
+2025/03/19 23:49:02 Reported load 53 for backend localhost:50061
+2025/03/19 23:49:07 Reported load 58 for backend localhost:50061
+2025/03/19 23:49:12 Reported load 36 for backend localhost:50061
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=501.002989ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.909592ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.437688ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.496022ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.403811ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.786224ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.77804ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.609576ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.538024ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.036518ms
+2025/03/19 23:49:16 [ComputeTask] Operation=add, Operands=(25,15), Result=40, Latency=500.794105ms
+2025/03/19 23:49:17 Reported load 88 for backend localhost:50061

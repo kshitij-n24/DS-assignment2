@@ -1,0 +1,213 @@
+2025/03/19 23:48:58 Load Balancer server listening on port 50051
+2025/03/19 23:49:02 Registered backend: localhost:50052
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50052 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50052 with load 51
+2025/03/19 23:49:02 Reported load 51 for backend localhost:50052
+2025/03/19 23:49:02 Registered backend: localhost:50053
+2025/03/19 23:49:02 Registered backend: localhost:50053
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50053 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50053 with load 71
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50053 with load 0
+2025/03/19 23:49:02 Reported load 71 for backend localhost:50053
+2025/03/19 23:49:02 Registered backend: localhost:50054
+2025/03/19 23:49:02 Registered backend: localhost:50054
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50054 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50054 with load 21
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50054 with load 0
+2025/03/19 23:49:02 Reported load 21 for backend localhost:50054
+2025/03/19 23:49:02 Registered backend: localhost:50055
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50055 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50055 with load 91
+2025/03/19 23:49:02 Reported load 91 for backend localhost:50055
+2025/03/19 23:49:02 Registered backend: localhost:50056
+2025/03/19 23:49:02 Reported load 100 for backend localhost:50056
+2025/03/19 23:49:02 Registered backend: localhost:50056
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50056 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50056 with load 100
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50056 with load 0
+2025/03/19 23:49:02 Registered backend: localhost:50057
+2025/03/19 23:49:02 Reported load 6 for backend localhost:50057
+2025/03/19 23:49:02 Registered backend: localhost:50057
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50057 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50057 with load 6
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50057 with load 0
+2025/03/19 23:49:02 Registered backend: localhost:50058
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50058 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50058 with load 44
+2025/03/19 23:49:02 Reported load 44 for backend localhost:50058
+2025/03/19 23:49:02 Registered backend: localhost:50059
+2025/03/19 23:49:02 Reported load 63 for backend localhost:50059
+2025/03/19 23:49:02 Registered backend: localhost:50059
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50059 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50059 with load 63
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50059 with load 0
+2025/03/19 23:49:02 Registered backend: localhost:50060
+2025/03/19 23:49:02 Reported load 86 for backend localhost:50060
+2025/03/19 23:49:02 Registered backend: localhost:50060
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50060 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50060 with load 86
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50060 with load 0
+2025/03/19 23:49:02 Registered backend: localhost:50061
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50061 with load 0
+2025/03/19 23:49:02 [Watcher] Updated backend localhost:50061 with load 53
+2025/03/19 23:49:02 Reported load 53 for backend localhost:50061
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50052 with load 6
+2025/03/19 23:49:07 Reported load 6 for backend localhost:50052
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50053 with load 92
+2025/03/19 23:49:07 Reported load 92 for backend localhost:50053
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50054 with load 81
+2025/03/19 23:49:07 Reported load 81 for backend localhost:50054
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50055 with load 38
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50056 with load 100
+2025/03/19 23:49:07 Reported load 100 for backend localhost:50056
+2025/03/19 23:49:07 Reported load 38 for backend localhost:50055
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50057 with load 81
+2025/03/19 23:49:07 Reported load 81 for backend localhost:50057
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50058 with load 79
+2025/03/19 23:49:07 Reported load 79 for backend localhost:50058
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50059 with load 3
+2025/03/19 23:49:07 Reported load 3 for backend localhost:50059
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50060 with load 13
+2025/03/19 23:49:07 Reported load 13 for backend localhost:50060
+2025/03/19 23:49:07 [Watcher] Updated backend localhost:50061 with load 58
+2025/03/19 23:49:07 Reported load 58 for backend localhost:50061
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50052 with load 48
+2025/03/19 23:49:12 Reported load 48 for backend localhost:50052
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50053 with load 57
+2025/03/19 23:49:12 Reported load 57 for backend localhost:50053
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50054 with load 77
+2025/03/19 23:49:12 Reported load 77 for backend localhost:50054
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50055 with load 14
+2025/03/19 23:49:12 Reported load 14 for backend localhost:50055
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50056 with load 46
+2025/03/19 23:49:12 Reported load 46 for backend localhost:50056
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50057 with load 100
+2025/03/19 23:49:12 Reported load 100 for backend localhost:50057
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50058 with load 92
+2025/03/19 23:49:12 Reported load 92 for backend localhost:50058
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50059 with load 100
+2025/03/19 23:49:12 Reported load 100 for backend localhost:50059
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50060 with load 100
+2025/03/19 23:49:12 Reported load 100 for backend localhost:50060
+2025/03/19 23:49:12 [Watcher] Updated backend localhost:50061 with load 36
+2025/03/19 23:49:12 Reported load 36 for backend localhost:50061
+2025/03/19 23:49:14 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:14 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:14 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:15 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50059 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50060 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50058 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50056 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50053 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50054 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50052 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50061 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50057 for policy ROUND_ROBIN
+2025/03/19 23:49:16 Selected backend localhost:50055 for policy ROUND_ROBIN
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50052 with load 23
+2025/03/19 23:49:17 Reported load 23 for backend localhost:50052
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50053 with load 46
+2025/03/19 23:49:17 Reported load 46 for backend localhost:50053
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50054 with load 22
+2025/03/19 23:49:17 Reported load 22 for backend localhost:50054
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50055 with load 100
+2025/03/19 23:49:17 Reported load 100 for backend localhost:50055
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50056 with load 42
+2025/03/19 23:49:17 Reported load 42 for backend localhost:50056
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50057 with load 4
+2025/03/19 23:49:17 Reported load 4 for backend localhost:50057
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50058 with load 15
+2025/03/19 23:49:17 Reported load 15 for backend localhost:50058
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50059 with load 16
+2025/03/19 23:49:17 Reported load 16 for backend localhost:50059
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50060 with load 83
+2025/03/19 23:49:17 Reported load 83 for backend localhost:50060
+2025/03/19 23:49:17 [Watcher] Updated backend localhost:50061 with load 88
+2025/03/19 23:49:17 Reported load 88 for backend localhost:50061
